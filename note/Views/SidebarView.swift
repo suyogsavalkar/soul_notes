@@ -123,13 +123,6 @@ struct SidebarView: View {
                     .accessibilityHint("Toggles between light and dark theme")
                 }
                 .padding(.horizontal, 8)
-                
-                // Focus statistics
-                if let onFocusStatsClick = onFocusStatsClick {
-                    FocusStatsView(onTapStats: onFocusStatsClick)
-                        .environmentObject(focusTimerManager)
-                        .environmentObject(themeManager)
-                }
             }
             .padding(.bottom, 16)
         }

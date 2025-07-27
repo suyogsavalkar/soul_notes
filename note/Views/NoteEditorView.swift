@@ -159,6 +159,7 @@ struct NoteEditorView: View {
     
     private func handleTypingActivity() {
         lastTypingTime = Date()
+        focusTimerManager.updateLastTypingTime()
         
         // Reset typing timer
         typingTimer?.invalidate()
@@ -170,10 +171,6 @@ struct NoteEditorView: View {
                 focusTimerManager.handleTypingPause()
             }
         }
-    }
-    
-    private func handleTypingActivity() {
-        focusTimerManager.updateLastTypingTime()
     }
     
     private func checkForChanges() {

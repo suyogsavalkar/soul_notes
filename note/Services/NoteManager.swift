@@ -352,32 +352,7 @@
 import Foundation
 import Combine
 
-// MARK: - Supporting Models and Extensions
-
-struct Note: Codable, Identifiable {
-    let id = UUID()
-    var categoryId: UUID
-    var title: String = ""
-    var content: String = ""
-    var createdAt: Date = Date()
-    var modifiedAt: Date = Date()
-    
-    mutating func updateModificationDate() {
-        modifiedAt = Date()
-    }
-}
-
-struct Category: Codable, Identifiable {
-    let id = UUID()
-    var name: String
-    var iconName: String
-    
-    static let defaultCategories = [
-        Category(name: "General", iconName: "folder"),
-        Category(name: "Work", iconName: "briefcase"),
-        Category(name: "Personal", iconName: "person")
-    ]
-}
+// MARK: - Supporting Extensions
 
 extension FileManager {
     var documentsDirectory: URL {
@@ -398,6 +373,10 @@ extension FileManager {
     
     var categoriesFileURL: URL {
         notesDirectory.appendingPathComponent("categories.json")
+    }
+    
+    var themeSettingsFileURL: URL {
+        notesDirectory.appendingPathComponent("theme-settings.json")
     }
 }
 

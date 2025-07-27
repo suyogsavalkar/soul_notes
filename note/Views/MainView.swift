@@ -13,13 +13,11 @@ struct MainView: View {
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var fontSizeManager = FontSizeManager()
     @StateObject private var focusTimerManager = FocusTimerManager()
-    @StateObject private var focusTimerManager = FocusTimerManager()
     @State private var selectedCategory: Category?
     @State private var selectedNote: Note?
     @State private var showingSidebar: Bool = true
     @State private var sidebarVisibility: NavigationSplitViewVisibility = .all
     @State private var showingFocusLog: Bool = false
-    @State private var showingFocusLog = false
     
     var body: some View {
         NavigationSplitView(columnVisibility: $sidebarVisibility) {
@@ -134,7 +132,6 @@ struct MainView: View {
         .environmentObject(themeManager)
         .environmentObject(fontSizeManager)
         .environmentObject(focusTimerManager)
-        .environmentObject(focusTimerManager)
         .background(themeManager.backgroundColor)
         .alert("Error", isPresented: $errorHandler.showingError) {
             Button("OK") {
@@ -152,7 +149,7 @@ struct MainView: View {
             }
         }
         .sheet(isPresented: $showingFocusLog) {
-            FocusLogView()
+            FocusLogView(focusLogs: focusTimerManager.getFocusLogs())
                 .environmentObject(focusTimerManager)
                 .environmentObject(themeManager)
         }
@@ -164,10 +161,6 @@ struct MainView: View {
             if selectedCategory == nil, let firstCategory = noteManager.categories.first {
                 selectedCategory = firstCategory
             }
-        }
-        .sheet(isPresented: $showingFocusLog) {
-            FocusLogView(focusLogs: focusTimerManager.getFocusLogs())
-                .environmentObject(themeManager)
         }
     }
 }
