@@ -14,9 +14,11 @@ class FocusTimerManager: ObservableObject {
     @Published var remainingTime: TimeInterval = 600 // 10 minutes default
     @Published var selectedDuration: TimeInterval = 600 // 10 minutes default
     @Published var focusStats: FocusStats = FocusStats()
+    @Published var distractionStats: DistractionStats = DistractionStats()
     
     private var timer: Timer?
     private var focusLogs: [FocusLogEntry] = []
+    private var distractionLogs: [DistractionLogEntry] = []
     private var sessionStartTime: Date?
     private var lastTypingTime: Date = Date()
     private var typingTimer: Timer?
@@ -162,14 +164,46 @@ class FocusTimerManager: ObservableObject {
             alert.addButton(withTitle: "Cancel")
             alert.alertStyle = .informational
             
-            let response = alert.runModal()
-            if response == .alertFirstButtonReturn {
-                // Return button clicked
-                self.logEvent(.sessionReturn)
-                NSApp.activate(ignoringOtherApps: true)
+            // Show alert on the current active window instead of app window
+            if let currentWindow = NSApp.keyWindow ?? NSApp.mainWindow {
+                alert.beginSheetModal(for: currentWindow) { response in
+                    if response == .alertFirstButtonReturn {
+                        // Return button clicked - record as distraction avoided with tab change reason
+                        self.logEvent(.sessionReturn)
+                        self.logDistractionAvoided(type: .tabChange, reason: "Switched away from app")
+                        NSApp.activate(ignoringOtherApps: true)
+                    } else {
+                        // Cancel button clicked - record as actual distraction
+                        let distractionEntry = DistractionLogEntry(
+                            timestamp: Date(),
+                            distractionType: .tabChange,
+                            reason: "Switched away from app",
+                            wasAvoided: false
+                        )
+                        self.distractionLogs.append(distractionEntry)
+                        self.saveDistractionData()
+                        self.stopTimer()
+                    }
+                }
             } else {
-                // Cancel button clicked
-                self.stopTimer()
+                // Fallback to modal if no window is available
+                let response = alert.runModal()
+                if response == .alertFirstButtonReturn {
+                    self.logEvent(.sessionReturn)
+                    self.logDistractionAvoided(type: .tabChange, reason: "Switched away from app")
+                    NSApp.activate(ignoringOtherApps: true)
+                } else {
+                    // Cancel button clicked - record as actual distraction
+                    let distractionEntry = DistractionLogEntry(
+                        timestamp: Date(),
+                        distractionType: .tabChange,
+                        reason: "Switched away from app",
+                        wasAvoided: false
+                    )
+                    self.distractionLogs.append(distractionEntry)
+                    self.saveDistractionData()
+                    self.stopTimer()
+                }
             }
         }
     }
@@ -186,7 +220,7 @@ class FocusTimerManager: ObservableObject {
         guard isTimerRunning else { return }
         
         let timeSinceLastTyping = Date().timeIntervalSince(lastTypingTime)
-        if timeSinceLastTyping >= 15.0 {
+        if timeSinceLastTyping >= 60.0 { // Changed from 15 seconds to 1 minute
             handleTypingPause()
         }
     }
@@ -203,6 +237,10 @@ class FocusTimerManager: ObservableObject {
     }
     
     private func showTypingPauseAlert() {
+        // Stop typing monitoring while showing alert
+        typingTimer?.invalidate()
+        typingTimer = nil
+        
         DispatchQueue.main.async {
             let alert = NSAlert()
             alert.messageText = "You stopped typing"
@@ -213,8 +251,9 @@ class FocusTimerManager: ObservableObject {
             
             let response = alert.runModal()
             if response == .alertFirstButtonReturn {
-                // "I am thinking" - continue session
+                // "I am thinking" - continue session and restart typing monitoring
                 self.lastTypingTime = Date()
+                self.restartTypingMonitoring()
             } else {
                 // "I was distracted" - show distraction dialog
                 self.showDistractionDialog()
@@ -237,18 +276,40 @@ class FocusTimerManager: ObservableObject {
         
         DispatchQueue.main.async {
             let response = alert.runModal()
-            let reason = textField.stringValue.isEmpty ? nil : textField.stringValue
+            
+            // Use custom reason if provided, otherwise use a descriptive default for typing inactivity
+            let reason = textField.stringValue.isEmpty ? "Stopped typing for 1 minute" : textField.stringValue
             
             if response == .alertFirstButtonReturn {
-                // "Return to the note"
-                self.logDistraction(reason: reason)
+                // "Return to the note" - record as distraction avoided with custom reason
+                self.logDistractionAvoided(type: .customReason, reason: reason)
+                
                 self.lastTypingTime = Date()
+                self.restartTypingMonitoring()
             } else {
-                // "End the session"
-                self.logDistraction(reason: reason)
+                // "End the session" - record as actual distraction with custom reason
+                let distractionEntry = DistractionLogEntry(
+                    timestamp: Date(),
+                    distractionType: .customReason,
+                    reason: reason,
+                    wasAvoided: false
+                )
+                self.distractionLogs.append(distractionEntry)
+                self.saveDistractionData()
+                
                 self.logSessionEnd()
                 self.stopTimer()
             }
+        }
+    }
+    
+    private func restartTypingMonitoring() {
+        guard isTimerRunning else { return }
+        
+        // Only restart typing monitoring if timer is still running
+        typingTimer?.invalidate()
+        typingTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            self.checkTypingActivity()
         }
     }
     
@@ -325,6 +386,46 @@ class FocusTimerManager: ObservableObject {
         return focusLogs
     }
     
+    func getDistractionLogs() -> [DistractionLogEntry] {
+        return distractionLogs.sorted { $0.timestamp > $1.timestamp }
+    }
+    
+    // MARK: - Distraction Logging
+    
+    func logDistractionAvoided(type: DistractionType, reason: String) {
+        let entry = DistractionLogEntry(
+            timestamp: Date(),
+            distractionType: type,
+            reason: reason,
+            wasAvoided: true
+        )
+        distractionLogs.append(entry)
+        
+        // Update statistics
+        distractionStats.totalDistractionsAvoided += 1
+        updateDistractionStats()
+        saveDistractionData()
+    }
+    
+    private func updateDistractionStats() {
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // Calculate weekly count (last 7 days)
+        let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+        distractionStats.weeklyDistractionsAvoided = distractionLogs.filter { 
+            $0.timestamp >= weekAgo && $0.wasAvoided 
+        }.count
+        
+        // Calculate monthly count (last 30 days)
+        let monthAgo = calendar.date(byAdding: .day, value: -30, to: now) ?? now
+        distractionStats.monthlyDistractionsAvoided = distractionLogs.filter { 
+            $0.timestamp >= monthAgo && $0.wasAvoided 
+        }.count
+        
+        distractionStats.lastUpdated = now
+    }
+    
     // MARK: - Computed Properties
     
     var formattedRemainingTime: String {
@@ -368,6 +469,59 @@ class FocusTimerManager: ObservableObject {
     private func loadFocusData() {
         loadFocusLogs()
         loadFocusStats()
+        loadDistractionData()
+    }
+    
+    private func saveDistractionData() {
+        saveDistractionLogs()
+        saveDistractionStats()
+    }
+    
+    private func saveDistractionLogs() {
+        do {
+            let data = try JSONEncoder().encode(distractionLogs)
+            let url = getDocumentsDirectory().appendingPathComponent("distraction-logs.json")
+            try data.write(to: url)
+        } catch {
+            print("Failed to save distraction logs: \(error)")
+        }
+    }
+    
+    private func saveDistractionStats() {
+        do {
+            let data = try JSONEncoder().encode(distractionStats)
+            let url = getDocumentsDirectory().appendingPathComponent("distraction-stats.json")
+            try data.write(to: url)
+        } catch {
+            print("Failed to save distraction stats: \(error)")
+        }
+    }
+    
+    private func loadDistractionData() {
+        loadDistractionLogs()
+        loadDistractionStats()
+    }
+    
+    private func loadDistractionLogs() {
+        do {
+            let url = getDocumentsDirectory().appendingPathComponent("distraction-logs.json")
+            let data = try Data(contentsOf: url)
+            distractionLogs = try JSONDecoder().decode([DistractionLogEntry].self, from: data)
+        } catch {
+            print("Failed to load distraction logs: \(error)")
+            distractionLogs = []
+        }
+    }
+    
+    private func loadDistractionStats() {
+        do {
+            let url = getDocumentsDirectory().appendingPathComponent("distraction-stats.json")
+            let data = try Data(contentsOf: url)
+            distractionStats = try JSONDecoder().decode(DistractionStats.self, from: data)
+        } catch {
+            print("Failed to load distraction stats: \(error)")
+            distractionStats = DistractionStats()
+        }
     }
     
     private func loadFocusLogs() {
@@ -394,7 +548,7 @@ class FocusTimerManager: ObservableObject {
     
     private func getDocumentsDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        let documentsDirectory = paths[0].appendingPathComponent("NotesApp")
+        let documentsDirectory = paths[0].appendingPathComponent("Soul")
         
         // Create directory if it doesn't exist
         try? FileManager.default.createDirectory(at: documentsDirectory, withIntermediateDirectories: true)

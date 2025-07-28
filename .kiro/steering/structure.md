@@ -2,96 +2,68 @@
 inclusion: always
 ---
 
-# Project Structure & Architecture Guidelines
+# Architecture & Structure Guidelines
 
-## Directory Structure Rules
+## File Organization
 
-### Core Layers (MVVM + Services)
+### Directory Structure (MVVM + Services Pattern)
 
-- **Models/**: Data structures only - use `struct` with `Codable`, `Identifiable`
-- **Views/**: SwiftUI views following single responsibility principle
-- **Services/**: Business logic with `@ObservableObject` for state management
-- **Extensions/**: Type extensions for shared functionality
-- **Utilities/**: Pure functions and helper classes
-- **Resources/**: Static assets (fonts, images)
+- `Models/` - Data structs with `Codable`, `Identifiable`
+- `Views/` - Pure SwiftUI components, no business logic
+- `Services/` - `@ObservableObject` classes for state management
+- `Extensions/` - Type extensions for shared functionality
+- `Utilities/` - Pure helper functions and classes
+- `Resources/` - Static assets (fonts, images)
 
-### File Placement Rules
+### Naming Conventions
 
-- Place new views in `Views/` with descriptive names ending in "View"
-- Data models go in `Models/` as structs with clear property types
-- Business logic belongs in `Services/` as observable classes
-- UI extensions go in `Extensions/` using Type+Feature naming
-- Helper utilities go in `Utilities/` as standalone classes/structs
+- **Views**: `[Feature][Component]View.swift` (e.g., `NoteEditorView.swift`)
+- **Models**: `[Entity].swift` (e.g., `Note.swift`, `Category.swift`)
+- **Services**: `[Feature]Manager.swift` (e.g., `NoteManager.swift`, `ThemeManager.swift`)
+- **Extensions**: `[Type]+[Feature].swift` (e.g., `Color+Theme.swift`)
 
-## Naming Conventions (Strictly Enforced)
-
-### SwiftUI Views
-
-- **Format**: `[Feature][Component]View.swift`
-- **Examples**: `NoteEditorView`, `CategoryCreationView`, `SFSymbolPicker`
-- **Rule**: Always end with "View" for UI components
-
-### Data Models
-
-- **Format**: `[Entity].swift` (singular noun)
-- **Examples**: `Note.swift`, `Category.swift`
-- **Rule**: Use `struct` with `Codable`, `Identifiable` protocols
-
-### Services & Managers
-
-- **Format**: `[Feature]Manager.swift` or `[Feature]Handler.swift`
-- **Examples**: `NoteManager`, `ErrorHandler`, `ThemeManager`
-- **Rule**: Use `class` with `@ObservableObject` for state management
-
-### Extensions
-
-- **Format**: `[Type]+[Feature].swift`
-- **Examples**: `Color+Theme.swift`, `Font+DMSans.swift`
-- **Rule**: Group related extensions by feature, not by type
-
-## Architecture Patterns
+## Architecture Rules
 
 ### MVVM Implementation
 
-- **Views**: Pure SwiftUI, no business logic
-- **ViewModels**: Embedded in Services (NoteManager acts as ViewModel)
-- **Models**: Simple data structures with computed properties only
-- **Binding**: Use `@StateObject`, `@ObservedObject`, `@Published`
+- **Models**: Immutable `struct` with computed properties only
+- **Views**: Pure SwiftUI, observe services via `@StateObject`/`@ObservedObject`
+- **Services**: Act as ViewModels using `@Published` properties
+- **State**: Use `@State` only for local UI state (toggles, text input)
 
-### Data Flow Rules
+### Data Flow
 
 - Services own and mutate data via `@Published` properties
-- Views observe services via `@StateObject` or `@ObservedObject`
-- Models are immutable structs passed between layers
-- Use `@State` only for local UI state (toggles, text fields)
+- Views observe services, never directly mutate models
+- Pass data down, events up through the view hierarchy
+- Use `@StateObject` for service ownership, `@ObservedObject` for injection
 
-### Error Handling Pattern
+### Error Handling
 
-- All services use centralized `ErrorHandler` for user-facing errors
-- Throw specific error types, handle gracefully in UI
-- Never crash - always provide fallback states
+- All user-facing errors through centralized `ErrorHandler` service
+- Use `Result<T, Error>` for operations that can fail
+- Provide fallback states, never crash the app
 
-## Code Organization Rules
+## Development Patterns
 
-### When Adding New Features
+### Adding New Features
 
 1. Create model in `Models/` if new data structure needed
-2. Add business logic to existing service or create new one in `Services/`
+2. Add/extend service in `Services/` for business logic
 3. Create views in `Views/` that observe the service
-4. Add extensions in `Extensions/` for reusable UI components
-5. Write tests in parallel structure under `noteTests/`
+4. Add reusable components to `Extensions/`
+5. Write corresponding tests in `noteTests/`
 
-### File Dependencies
+### Performance Requirements
 
-- Models: No dependencies (pure data)
-- Views: Can import Models and Services only
-- Services: Can import Models and other Services
-- Extensions: Can import Models, avoid importing Services
-- Utilities: No dependencies on app-specific code
+- Use `PerformanceOptimizer.debounce()` for text input (300ms)
+- Implement lazy loading with `LazyVGrid` for large collections
+- Cache expensive computations via `PerformanceOptimizer.cache()`
+- Auto-save with debounced writes to prevent data loss
 
-### Performance Guidelines
+### Code Quality
 
-- Use `PerformanceOptimizer` for caching and debouncing
-- Lazy load large collections in views
-- Debounce text input with 300ms delay
-- Cache computed properties that are expensive
+- All public APIs must have explicit type annotations
+- Use `// MARK:` comments to organize code sections
+- Follow dependency injection pattern for testability
+- Write unit tests for all service methods

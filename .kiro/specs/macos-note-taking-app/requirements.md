@@ -283,3 +283,152 @@ This document outlines the requirements for a responsive macOS note-taking appli
 7. WHEN focus statistics are shown THEN the system SHALL display "{time} hours focus" and "{number} distractions avoided" with appropriate icons
 8. WHEN focus statistics are clicked THEN the system SHALL navigate to a complete log list view
 9. WHEN the log list is displayed THEN the system SHALL show all focus events with timestamps and details
+
+### Requirement 25
+
+**User Story:** As a user, I want the create note option to appear as a proper square card, so that it maintains visual consistency with other note cards.
+
+#### Acceptance Criteria
+
+1. WHEN the notes grid is displayed THEN the system SHALL show the create note option as a square card matching other note cards
+2. WHEN the create note card is rendered THEN the system SHALL ensure it has the same dimensions and styling as regular note cards
+3. WHEN the create note card is displayed THEN the system SHALL prevent the card from being squished or smaller than other cards
+
+### Requirement 26
+
+**User Story:** As a user, I want the note title to remain in a fixed position and be properly styled, so that I can edit it without visual disruption.
+
+#### Acceptance Criteria
+
+1. WHEN editing a note THEN the system SHALL keep the title field in a fixed position that doesn't move when cursor is placed
+2. WHEN the title is displayed THEN the system SHALL use semibold font weight for better visual hierarchy
+3. WHEN typing in the title field THEN the system SHALL limit the title to 45 characters maximum
+4. WHEN the title reaches 45 characters THEN the system SHALL prevent further input or provide appropriate truncation
+
+### Requirement 27
+
+**User Story:** As a user, I want to be able to place my cursor anywhere in the note body and type naturally, so that I can edit text efficiently.
+
+#### Acceptance Criteria
+
+1. WHEN clicking anywhere in the note body text THEN the system SHALL place the cursor at the clicked position
+2. WHEN typing in the note body THEN the system SHALL insert text at the current cursor position
+3. WHEN editing text in the middle of the body THEN the system SHALL NOT move the cursor to the end automatically
+4. WHEN the note body is focused THEN the system SHALL maintain proper cursor positioning throughout the editing session
+
+### Requirement 28
+
+**User Story:** As a user, I want the focus and distraction metrics properly positioned in the sidebar, so that the interface feels organized and accessible.
+
+#### Acceptance Criteria
+
+1. WHEN the sidebar is displayed THEN the system SHALL position focus and distraction metrics below the dark/light mode toggle
+2. WHEN the metrics are displayed THEN the system SHALL maintain proper styling and alignment consistent with other sidebar elements
+3. WHEN the sidebar layout is rendered THEN the system SHALL ensure metrics don't interfere with other sidebar functionality
+
+### Requirement 29
+
+**User Story:** As a user, I want improved focus system behavior that doesn't disrupt my workflow, so that I can maintain concentration without intrusive interruptions.
+
+#### Acceptance Criteria
+
+1. WHEN switching tabs or apps THEN the system SHALL display focus alerts on the current window where the user is, not on the app window
+2. WHEN the user hasn't typed for a period THEN the system SHALL wait 1 minute before showing the alert (changed from 15 seconds)
+3. WHEN the user provides a distraction reason and returns to the note view THEN the system SHALL start the 1-minute timer for typing detection
+4. WHEN the alert is dismissed THEN the system SHALL only restart the typing timer after the user returns to active note editing
+
+### Requirement 30
+
+**User Story:** As a user, I want a simple and comprehensive distraction log system, so that I can track my focus patterns effectively.
+
+#### Acceptance Criteria
+
+1. WHEN clicking on distraction metrics THEN the system SHALL open a single window showing the distraction log
+2. WHEN the distraction log is displayed THEN the system SHALL show total number of distractions avoided as a bold number
+3. WHEN the distraction log is displayed THEN the system SHALL show distractions avoided in last 7 days as a bold number
+4. WHEN the distraction log is displayed THEN the system SHALL show distractions avoided in last 30 days as a bold number
+5. WHEN the statistics are displayed THEN the system SHALL show descriptive text below each number on the same line
+6. WHEN the distraction log is displayed THEN the system SHALL show a list of distractions with date, time, and distraction reason
+7. WHEN the distraction log window is opened THEN the system SHALL ensure it's properly sized and not too small
+
+### Requirement 31
+
+**User Story:** As a user, I want distractions to be recorded accurately based on my actions, so that the log reflects my actual focus patterns.
+
+#### Acceptance Criteria
+
+1. WHEN the user changes tabs and clicks return THEN the system SHALL record this as a distraction avoided
+2. WHEN the user provides a custom reason for distraction THEN the system SHALL record this custom reason in the log
+3. WHEN the distraction is due to tab change THEN the system SHALL show "Tab change" in the distraction field
+4. WHEN the distraction has a custom reason THEN the system SHALL show the user-provided reason in the distraction field
+5. WHEN the user spends 1 minute providing a distraction reason THEN the system SHALL count this as activity and record the distraction
+
+### Requirement 32
+
+**User Story:** As a user, I want to share my focus achievements, so that I can celebrate my productivity milestones.
+
+#### Acceptance Criteria
+
+1. WHEN hovering over the total distractions number THEN the system SHALL show a "share your achievement" option
+2. WHEN hovering over the weekly distractions number THEN the system SHALL show a "share your achievement" option  
+3. WHEN hovering over the monthly distractions number THEN the system SHALL show a "share your achievement" option
+4. WHEN clicking "share your achievement" THEN the system SHALL download an image of the numbers to the user's Downloads folder with proper permissions
+5. WHEN the achievement image is generated THEN the system SHALL style it as if the numbers are in a macOS window
+
+### Requirement 33
+
+**User Story:** As a user, I want the note title to remain stable and properly styled during editing, so that I can focus on writing without visual distractions.
+
+#### Acceptance Criteria
+
+1. WHEN editing a note title THEN the system SHALL keep the title field in a fixed position that doesn't move up and down
+2. WHEN the title is displayed THEN the system SHALL use bold font weight with 36px font size
+3. WHEN typing in the title field THEN the system SHALL maintain stable positioning regardless of cursor placement
+4. WHEN the title field is focused THEN the system SHALL prevent any vertical movement or layout shifts
+
+### Requirement 34
+
+**User Story:** As a user, I want natural cursor behavior in the note body, so that I can edit text efficiently at any position.
+
+#### Acceptance Criteria
+
+1. WHEN clicking anywhere in the note body text THEN the system SHALL place the cursor at the exact clicked position
+2. WHEN typing in the note body THEN the system SHALL insert text at the current cursor position
+3. WHEN editing text in the middle of the body THEN the system SHALL NOT automatically move the cursor to the end
+4. WHEN the cursor is positioned anywhere in the text THEN the system SHALL maintain that position during typing
+
+### Requirement 35
+
+**User Story:** As a user, I want to download my distraction logs for AI analysis, so that I can get insights about my focus patterns.
+
+#### Acceptance Criteria
+
+1. WHEN viewing the distraction log THEN the system SHALL display a "Get diagnosed by ChatGPT" button next to "Recent Distractions"
+2. WHEN the "Get diagnosed by ChatGPT" button is clicked THEN the system SHALL download a text file containing all distraction logs with date, time, and reason
+3. WHEN the download is complete THEN the system SHALL show a message "Diagnosis log downloaded successfully!"
+4. WHEN the success message is shown THEN the system SHALL display a "Go to ChatGPT" button with a link icon
+5. WHEN the "Go to ChatGPT" button is clicked THEN the system SHALL open chatgpt.com in the default browser
+
+### Requirement 36
+
+**User Story:** As a user, I want to reflect on my notes with AI assistance, so that I can gain deeper insights into my writing.
+
+#### Acceptance Criteria
+
+1. WHEN viewing the note editor controls THEN the system SHALL display a "Reflect with AI" button next to the timer controls
+2. WHEN the "Reflect with AI" button is clicked THEN the system SHALL open a large modal dialog
+3. WHEN the reflection modal is displayed THEN the system SHALL show the current note content in a scrollable text box
+4. WHEN the reflection modal is displayed THEN the system SHALL provide a "Copy to Clipboard" button for the note content
+5. WHEN the reflection modal is displayed THEN the system SHALL provide a "Go to ChatGPT" button at the bottom
+6. WHEN the "Go to ChatGPT" button is clicked THEN the system SHALL open chatgpt.com in the default browser
+
+### Requirement 37
+
+**User Story:** As a user, I want the app to be called "Solo" with an appropriate logo, so that it reflects the focused, individual nature of the note-taking experience.
+
+#### Acceptance Criteria
+
+1. WHEN the app is displayed in macOS THEN the system SHALL show "Solo" as the application name
+2. WHEN the app icon is displayed THEN the system SHALL use the logo from the specified logo folder
+3. WHEN the app is referenced in the interface THEN the system SHALL consistently use "Solo" branding
+4. WHEN the app appears in the dock or applications folder THEN the system SHALL display the new logo and "Solo" name

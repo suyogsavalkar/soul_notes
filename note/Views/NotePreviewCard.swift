@@ -63,7 +63,7 @@ struct NotePreviewCard: View {
                     Spacer()
                     
                     // Delete button in bottom right (only show if onDelete is provided and card is hovered)
-                    if let onDelete = onDelete, isHovered {
+                    if onDelete != nil, isHovered {
                         Button(action: {
                             showingDeleteConfirmation = true
                         }) {

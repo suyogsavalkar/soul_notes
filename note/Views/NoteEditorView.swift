@@ -18,6 +18,8 @@ struct NoteEditorView: View {
     @EnvironmentObject var focusTimerManager: FocusTimerManager
     @State private var lastTypingTime: Date = Date()
     @State private var typingTimer: Timer?
+    @State private var showReflectWithAI = false
+    @FocusState private var isBodyFocused: Bool
     
     let onSave: () -> Void
     let onToggleSidebar: () -> Void
@@ -69,6 +71,20 @@ struct NoteEditorView: View {
                     .environmentObject(focusTimerManager)
                     .environmentObject(themeManager)
                 
+                // Reflect with AI button
+                Button("Reflect with AI") {
+                    showReflectWithAI = true
+                }
+                .font(.dmSans(size: 12))
+                .foregroundColor(themeManager.accentColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(themeManager.accentColor.opacity(0.1))
+                )
+                .buttonStyle(PlainButtonStyle())
+                
                 Spacer()
             }
             .padding(.leading, 16)
@@ -85,29 +101,69 @@ struct NoteEditorView: View {
             GeometryReader { geometry in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        // Title field
-                        TextField("Note title", text: $note.title)
-                            .font(fontSizeManager.titleFont)
+                        // Title field with stable positioning and bold 36px font
+                        VStack(alignment: .leading, spacing: 0) {
+                            TextField("Note title", text: Binding(
+                                get: { note.title },
+                                set: { newValue in
+                                    // Limit to 45 characters
+                                    if newValue.count <= 45 {
+                                        note.title = newValue
+                                    }
+                                }
+                            ))
+                            .font(.dmSansBold(size: 36)) // Bold 36px font as required
                             .foregroundColor(themeManager.textColor)
                             .textFieldStyle(PlainTextFieldStyle())
                             .lineLimit(1)
                             .truncationMode(.tail)
-                            .onChange(of: note.title) { _ in
+                            .frame(height: 60, alignment: .leading) // Fixed height to accommodate 36px font with proper spacing
+                            .padding(.top, 40) // Increased top margin for stability and prevent movement
+                            .padding(.bottom, 20) // Bottom padding for visual separation
+                            .onChange(of: note.title) {
                                 handleContentChange()
                                 handleTypingActivity()
                             }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading) // Fixed positioning
+                        .background(Color.clear) // Ensure stable background
+                        .clipped() // Prevent any overflow that might cause movement
+                        .fixedSize(horizontal: false, vertical: true) // Prevent vertical expansion
                         
-                        // Body field
-                        TextEditor(text: $note.body)
-                            .font(fontSizeManager.bodyFont)
-                            .foregroundColor(themeManager.textColor)
-                            .scrollContentBackground(.hidden)
-                            .background(Color.clear)
-                            .frame(minHeight: max(400, geometry.size.height - 200))
-                            .onChange(of: note.body) { _ in
-                                handleContentChange()
-                                handleTypingActivity()
+                        // Body field with natural cursor positioning
+                        ZStack(alignment: .topLeading) {
+                            if note.body.isEmpty {
+                                Text("Start writing...")
+                                    .font(fontSizeManager.bodyFont)
+                                    .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
+                                    .padding(.top, 8)
+                                    .padding(.leading, 4)
+                                    .allowsHitTesting(false)
                             }
+                            
+                            TextEditor(text: $note.body)
+                                .font(fontSizeManager.bodyFont)
+                                .foregroundColor(themeManager.textColor)
+                                .scrollContentBackground(.hidden)
+                                .background(Color.clear)
+                                .frame(minHeight: max(400, geometry.size.height - 200))
+                                .focused($isBodyFocused)
+                                .textSelection(.enabled) // Enable text selection and cursor positioning
+                                .multilineTextAlignment(.leading) // Ensure proper text alignment
+                                .onChange(of: note.body) { oldValue, newValue in
+                                    // Only handle content change, don't interfere with cursor position
+                                    // TextEditor naturally maintains cursor position during typing
+                                    handleContentChange()
+                                    handleTypingActivity()
+                                }
+                                .onTapGesture { _ in
+                                    // Set focus when tapping, TextEditor handles cursor positioning automatically
+                                    if !isBodyFocused {
+                                        isBodyFocused = true
+                                    }
+                                }
+                                .allowsHitTesting(true) // Ensure proper hit testing for cursor placement
+                        }
                         
                         Spacer(minLength: 100) // Extra space at bottom
                     }
@@ -150,6 +206,14 @@ struct NoteEditorView: View {
             autoSaveDebouncer.cancel()
             typingTimer?.invalidate()
         }
+        .sheet(isPresented: $showReflectWithAI) {
+            NoteReflectionView(
+                noteTitle: note.title,
+                noteContent: note.body,
+                isPresented: $showReflectWithAI
+            )
+            .environmentObject(themeManager)
+        }
     }
     
     private func handleContentChange() {
@@ -166,8 +230,8 @@ struct NoteEditorView: View {
         
         // Only start monitoring if focus timer is running
         if focusTimerManager.isTimerRunning {
-            typingTimer = Timer.scheduledTimer(withTimeInterval: 15.0, repeats: false) { _ in
-                // User hasn't typed for 15 seconds
+            typingTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: false) { _ in
+                // User hasn't typed for 1 minute
                 focusTimerManager.handleTypingPause()
             }
         }
@@ -240,6 +304,110 @@ struct SaveButtonStyle: ButtonStyle {
             .shadow(color: Color.black.opacity(isSaved ? 0.05 : 0.1), radius: 4, x: 0, y: 2)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+struct ReflectWithAIView: View {
+    let noteContent: String
+    let noteTitle: String
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Header
+            HStack {
+                Text("Reflect with AI")
+                    .font(.dmSansBold(size: 24))
+                    .foregroundColor(themeManager.textColor)
+                
+                Spacer()
+                
+                Button("Done") {
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
+            
+            // Note content display
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Note: \(noteTitle.isEmpty ? "Untitled" : noteTitle)")
+                    .font(.dmSansMedium(size: 18))
+                    .foregroundColor(themeManager.textColor)
+                
+                ScrollView {
+                    Text(noteContent.isEmpty ? "This note is empty." : noteContent)
+                        .font(.dmSans(size: 14))
+                        .foregroundColor(themeManager.textColor)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(themeManager.cardBackgroundColor)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(themeManager.cardBorderColor, lineWidth: 1)
+                        )
+                }
+                .frame(maxHeight: 300)
+            }
+            .padding(.horizontal, 24)
+            
+            // Action buttons
+            HStack(spacing: 16) {
+                Button("Copy to Clipboard") {
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    
+                    let fullContent = """
+                    Note Title: \(noteTitle.isEmpty ? "Untitled" : noteTitle)
+                    
+                    Content:
+                    \(noteContent.isEmpty ? "This note is empty." : noteContent)
+                    
+                    Please help me reflect on this note and provide insights about:
+                    1. Key themes and ideas
+                    2. Areas for further development
+                    3. Questions to explore deeper
+                    4. Connections to other concepts
+                    5. Action items or next steps
+                    """
+                    
+                    pasteboard.setString(fullContent, forType: .string)
+                    
+                    // Show brief feedback
+                    // You could add a toast notification here
+                }
+                .font(.dmSans(size: 14))
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(themeManager.secondaryTextColor)
+                .cornerRadius(6)
+                .buttonStyle(PlainButtonStyle())
+                
+                Button("Go to ChatGPT") {
+                    if let url = URL(string: "https://chatgpt.com") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                .font(.dmSans(size: 14))
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(themeManager.accentColor)
+                .cornerRadius(6)
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 24)
+            
+            Spacer()
+        }
+        .background(themeManager.backgroundColor)
+        .frame(minWidth: 500, minHeight: 400)
     }
 }
 

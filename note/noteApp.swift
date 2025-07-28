@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct noteApp: App {
+struct SoulApp: App {
     var body: some Scene {
         WindowGroup {
             MainView()

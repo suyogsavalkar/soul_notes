@@ -48,7 +48,7 @@ struct NotesGridView: View {
             .onAppear {
                 updateGridColumns(for: geometry.size.width)
             }
-            .onChange(of: geometry.size.width) { width in
+            .onChange(of: geometry.size.width) { _, width in
                 updateGridColumns(for: width)
             }
         }
@@ -93,17 +93,27 @@ struct CreateNoteCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(spacing: 16) {
-                Image(systemName: "plus.circle")
-                    .font(.system(size: 32))
-                    .foregroundColor(themeManager.accentColor)
+            VStack(spacing: 12) {
+                // Top spacer to center content vertically
+                Spacer()
                 
-                Text("Create New Note")
-                    .font(.cardTitle)
-                    .foregroundColor(themeManager.secondaryTextColor)
+                VStack(spacing: 8) {
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 32))
+                        .foregroundColor(themeManager.accentColor)
+                    
+                    Text("Create New Note")
+                        .font(.cardTitle)
+                        .foregroundColor(themeManager.secondaryTextColor)
+                        .multilineTextAlignment(.center)
+                }
+                
+                // Bottom spacer to center content vertically
+                Spacer()
             }
-            .frame(maxWidth: .infinity)
-            .aspectRatio(1.0, contentMode: .fill)
+            .padding(10) // Same padding as NotePreviewCard
+            .frame(maxWidth: .infinity, alignment: .center)
+            .aspectRatio(1.0, contentMode: .fill) // Same aspect ratio as NotePreviewCard
             .background(themeManager.cardBackgroundColor)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -113,6 +123,12 @@ struct CreateNoteCard: View {
                     )
             )
             .cornerRadius(12)
+            .shadow(
+                color: isHovered ? themeManager.accentColor.opacity(0.2) : Color.clear,
+                radius: isHovered ? 8 : 0,
+                x: 0,
+                y: 2
+            ) // Same shadow as NotePreviewCard
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
@@ -120,7 +136,9 @@ struct CreateNoteCard: View {
         .accessibilityLabel("Create New Note")
         .accessibilityHint("Creates a new note in the current category")
         .onHover { hovering in
-            isHovered = hovering
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isHovered = hovering
+            }
         }
     }
 }

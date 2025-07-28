@@ -308,21 +308,90 @@ struct FocusStatsView: View {
 
 ### 13. Focus Log View (`FocusLogView`)
 
-**Purpose**: Detailed view of all focus sessions, distractions, and events
+**Purpose**: Simplified single-window view for distraction statistics and logging
 
 **Key Features**:
-- Chronological list of focus events
-- Event type categorization (session start/end, distractions, focus loss)
-- Date and time display for each event
-- Searchable and filterable log entries
+- Comprehensive distraction statistics display with bold numbers
+- Total, weekly, and monthly distraction counts
+- Chronological list of distractions with date, time, and reason
+- Achievement sharing functionality with hover interactions
+- Properly sized window for comfortable viewing
 
 **Interface**:
 ```swift
 struct FocusLogView: View {
-    let focusLogs: [FocusLogEntry]
-    @State private var searchText: String = ""
-    @State private var selectedFilter: LogFilter = .all
+    let distractionStats: DistractionStats
+    let distractionLogs: [DistractionLogEntry]
+    @State private var hoveredStat: StatType? = nil
     @EnvironmentObject var themeManager: ThemeManager
+    
+    func shareAchievement(for statType: StatType)
+    func generateAchievementImage(for statType: StatType) -> NSImage
+}
+```
+
+### 14. Welcome View Enhancement (`WelcomeView`)
+
+**Purpose**: Enhanced create note card that maintains visual consistency
+
+**Key Features**:
+- Square card dimensions matching regular note cards
+- Consistent styling and padding with note preview cards
+- Clear visual hierarchy with "+" icon and descriptive text
+- Proper grid alignment without compression
+
+**Interface**:
+```swift
+struct WelcomeView: View {
+    let onCreateNote: () -> Void
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var cardDimensions: CGSize {
+        // Matches NotePreviewCard dimensions exactly
+    }
+}
+```
+
+### 15. Note Reflection Modal (`NoteReflectionView`)
+
+**Purpose**: Modal dialog for AI-assisted note reflection and analysis
+
+**Key Features**:
+- Large modal dialog with note content display
+- Scrollable text area for long note content
+- Copy to clipboard functionality for note content
+- Direct ChatGPT integration with browser opening
+- Proper modal sizing and responsive layout
+
+**Interface**:
+```swift
+struct NoteReflectionView: View {
+    let noteTitle: String
+    let noteContent: String
+    @Binding var isPresented: Bool
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    func copyToClipboard()
+    func openChatGPT()
+}
+```
+
+### 16. Distraction Log Export Manager (`DistractionExportManager`)
+
+**Purpose**: Handles export of distraction logs for AI analysis
+
+**Key Features**:
+- Text file generation with formatted distraction data
+- Date, time, and reason formatting for readability
+- File download to user's Downloads folder with proper permissions
+- Success feedback and ChatGPT navigation integration
+
+**Interface**:
+```swift
+class DistractionExportManager: ObservableObject {
+    func exportDistractionLogs(_ logs: [DistractionLogEntry]) -> Result<URL, Error>
+    func formatLogEntry(_ entry: DistractionLogEntry) -> String
+    func showExportSuccess()
 }
 ```
 
@@ -385,31 +454,47 @@ struct FontSizePreference: Codable {
 ### Focus Session Models
 
 ```swift
-struct FocusLogEntry: Identifiable, Codable {
+struct DistractionLogEntry: Identifiable, Codable {
     let id: UUID
     let timestamp: Date
-    let eventType: FocusEventType
-    let sessionDuration: TimeInterval?
-    let distractionReason: String?
-    let remainingTime: TimeInterval?
+    let distractionType: DistractionType
+    let reason: String
+    let wasAvoided: Bool
 }
 
-enum FocusEventType: String, Codable, CaseIterable {
-    case sessionStart = "session_start"
-    case sessionEnd = "session_end"
+enum DistractionType: String, Codable, CaseIterable {
+    case tabChange = "tab_change"
+    case customReason = "custom_reason"
     case focusLoss = "focus_loss"
-    case typingPause = "typing_pause"
-    case distraction = "distraction"
-    case sessionReturn = "session_return"
 }
 
-struct FocusStats: Codable {
-    var totalFocusTime: TimeInterval = 0
-    var totalSessions: Int = 0
-    var distractionsAvoided: Int = 0
-    var averageSessionLength: TimeInterval = 0
+struct DistractionStats: Codable {
+    var totalDistractionsAvoided: Int = 0
+    var weeklyDistractionsAvoided: Int = 0
+    var monthlyDistractionsAvoided: Int = 0
     var lastUpdated: Date = Date()
+    
+    mutating func updateWeeklyCount() {
+        // Calculate distractions avoided in last 7 days
+    }
+    
+    mutating func updateMonthlyCount() {
+        // Calculate distractions avoided in last 30 days
+    }
 }
+
+enum StatType: CaseIterable {
+    case total, weekly, monthly
+    
+    var displayName: String {
+        switch self {
+        case .total: return "Total distractions avoided"
+        case .weekly: return "Distractions avoided in last 7 days"
+        case .monthly: return "Distractions avoided in last 30 days"
+        }
+    }
+}
+```
 ```
 
 ### Local Storage Structure
@@ -417,7 +502,7 @@ struct FocusStats: Codable {
 Notes will be stored in the user's Documents directory in a structured format:
 
 ```
-~/Documents/NotesApp/
+~/Documents/Solo/
 ├── notes.json          // All notes data
 ├── categories.json     // Categories configuration with custom icons
 ├── theme-settings.json // Theme preferences (dark/light mode)
@@ -425,6 +510,16 @@ Notes will be stored in the user's Documents directory in a structured format:
 ├── focus-logs.json     // Focus session logs and events
 ├── focus-stats.json    // Aggregated focus statistics
 └── app-settings.json   // Other app preferences
+```
+
+### Export and Download Structure
+
+Exported files will be saved to appropriate system directories:
+
+```
+~/Downloads/
+├── solo-distraction-logs-[timestamp].txt  // Exported distraction logs
+└── solo-achievement-[type]-[timestamp].png // Achievement sharing images
 ```
 
 ## Error Handling
@@ -459,6 +554,27 @@ Notes will be stored in the user's Documents directory in a structured format:
 - **Focus Logging**: Graceful handling of log file corruption with backup restoration
 - **App Focus Detection**: Fallback mechanisms if NSApplication focus notifications fail
 - **Timer Alerts**: Error handling for macOS alert system failures
+
+### Critical UI Fix Error Handling
+
+- **Title Positioning**: Fallback layout constraints if title field positioning fails
+- **Cursor Placement**: Default to end-of-text if click position detection fails
+- **File Permissions**: Graceful handling of Downloads folder permission issues
+- **Modal Presentation**: Error handling for modal dialog presentation failures
+- **Clipboard Operations**: Fallback behavior if clipboard access is denied
+- **Browser Opening**: Error handling if default browser cannot be opened
+- **Logo Integration**: Fallback to default icon if custom logo files are missing
+
+### Issue-Specific Error Handling
+
+- **Create Note Card**: Fallback dimensions if layout calculations fail
+- **Title Character Limit**: Graceful truncation if limit enforcement fails
+- **Cursor Positioning**: Fallback to end-of-text if click position detection fails
+- **Sidebar Metrics**: Default positioning if layout constraints fail
+- **Window-Aware Alerts**: Fallback to app window if current window detection fails
+- **Distraction Recording**: Data validation for log entries and statistics
+- **Achievement Sharing**: Error handling for image generation and file system operations
+- **Timer Adjustments**: Validation for timer duration changes and state management
 
 ## Testing Strategy
 
@@ -669,7 +785,7 @@ The focus timer helps users maintain concentration during writing sessions:
 Focus statistics are integrated into the sidebar for easy access:
 
 - **Statistics Display**: Shows total focus hours and distractions avoided
-- **Visual Integration**: Positioned below "Add new space" with appropriate icons
+- **Visual Integration**: Positioned below dark/light mode toggle with appropriate icons
 - **Navigation**: Clicking statistics opens detailed focus log view
 - **Real-time Updates**: Statistics update as focus sessions progress
 
@@ -681,3 +797,105 @@ Focus statistics are integrated into the sidebar for easy access:
 - **Card Layout**: Trash icon moved to bottom right, date to bottom left
 - **Title Constraints**: Note titles restricted to single line with overflow prevention
 - **Font Size Updates**: Title increased to 32px, body default to 16px (user-adjustable)
+
+### New Issue Resolutions
+
+#### Create Note Card Consistency
+
+The create note option will be redesigned to match the visual consistency of regular note cards:
+
+- **Square Dimensions**: Create note card uses identical dimensions to regular note cards
+- **Consistent Styling**: Same padding, border radius, and visual treatment as note cards
+- **Proper Layout**: Prevents card compression and maintains grid alignment
+- **Visual Hierarchy**: Clear "+" icon and "Create Note" text with proper spacing
+
+#### Note Title Improvements
+
+The note title editing experience will be enhanced for better usability:
+
+- **Fixed Positioning**: Title field maintains consistent position regardless of cursor placement
+- **Semibold Typography**: Title uses semibold font weight for improved visual hierarchy
+- **Character Limit**: Hard limit of 45 characters with input prevention beyond limit
+- **Stable Layout**: No vertical movement when focusing or editing title field
+
+#### Note Body Cursor Management
+
+The note body text editing will support natural cursor placement and editing:
+
+- **Click-to-Position**: Cursor placement at exact click location within text
+- **Maintain Position**: Cursor stays at insertion point during typing
+- **Natural Editing**: Text insertion at cursor position without automatic repositioning
+- **Selection Support**: Proper text selection and editing at any position in the body
+
+#### Sidebar Layout Reorganization
+
+The sidebar will be reorganized for better information hierarchy:
+
+- **Metrics Positioning**: Focus and distraction metrics moved below dark/light mode toggle
+- **Consistent Styling**: Metrics use same visual treatment as other sidebar elements
+- **Proper Alignment**: Metrics align with sidebar content and maintain proper spacing
+- **Clear Hierarchy**: Logical flow from categories to controls to metrics
+
+#### Enhanced Focus System
+
+The focus system will be redesigned for less intrusive operation:
+
+- **Window-Aware Alerts**: Focus alerts appear on the user's current window, not the app window
+- **Extended Timer**: Typing detection timer increased from 15 seconds to 1 minute
+- **Smart Timer Reset**: Timer only restarts after user returns to note editing from distraction dialog
+- **Context-Aware Behavior**: System understands user workflow and adapts accordingly
+
+#### Simplified Distraction Logging
+
+A new, streamlined distraction log system will replace the complex session logging:
+
+- **Single Window Interface**: One comprehensive window for all distraction statistics
+- **Clear Metrics Display**: Bold numbers for total, weekly, and monthly distractions avoided
+- **Descriptive Layout**: Numbers with explanatory text below on same line
+- **Detailed Log List**: Chronological list showing date, time, and distraction reason
+- **Proper Window Sizing**: Adequate window dimensions for comfortable viewing
+
+#### Accurate Distraction Recording
+
+Distraction recording will be improved to capture actual user behavior:
+
+- **Tab Change Detection**: Automatic recording when user switches tabs and returns
+- **Custom Reason Support**: User-provided distraction reasons stored and displayed
+- **Activity-Based Recording**: 1-minute activity in distraction dialog counts as engagement
+- **Contextual Labeling**: Clear distinction between tab changes and custom distractions
+
+#### Achievement Sharing System
+
+A new achievement sharing feature will allow users to celebrate focus milestones:
+
+- **Hover Interactions**: "Share your achievement" option appears on hover over statistics
+- **Image Generation**: System creates downloadable images of achievement statistics
+- **macOS Window Styling**: Generated images styled to look like native macOS windows
+- **Multiple Statistics**: Sharing available for total, weekly, and monthly statistics
+- **Proper Permissions**: Downloads saved to user's Downloads folder with appropriate file permissions
+
+#### Critical UI Fixes
+
+Several critical UI issues will be resolved for better user experience:
+
+- **Stable Title Positioning**: Note title field maintains fixed position without vertical movement during editing
+- **Bold Title Styling**: Title uses bold font weight at 36px size for better visual hierarchy
+- **Natural Cursor Behavior**: Note body supports click-to-position cursor placement and maintains cursor position during typing
+- **Text Insertion**: Text inserted at current cursor position rather than automatically moving to end
+
+#### AI Integration Features
+
+New AI-powered features will enhance the note-taking experience:
+
+- **Distraction Log Export**: Users can download distraction logs as text files for AI analysis
+- **ChatGPT Integration**: Direct links to ChatGPT for both distraction analysis and note reflection
+- **Note Reflection Modal**: Large modal dialog displaying note content with copy-to-clipboard functionality
+- **Seamless Workflow**: Integrated buttons and workflows for AI-assisted analysis
+
+#### Application Rebranding
+
+The application will be rebranded to better reflect its purpose:
+
+- **New Name**: Application renamed from "note" to "Solo" 
+- **Custom Logo**: Integration of custom logo from specified logo folder
+- **Consistent Branding**: "Solo" branding applied throughout the interface and system integration

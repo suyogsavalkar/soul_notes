@@ -113,10 +113,12 @@ struct MainView: View {
                 } else {
                     // Default state - show all notes or welcome screen
                     WelcomeView(
-                        onGetStarted: {
+                        onCreateNote: {
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 if let firstCategory = noteManager.categories.first {
                                     selectedCategory = firstCategory
+                                    let newNote = noteManager.createNote(in: firstCategory)
+                                    selectedNote = newNote
                                 }
                             }
                         }
@@ -149,9 +151,12 @@ struct MainView: View {
             }
         }
         .sheet(isPresented: $showingFocusLog) {
-            FocusLogView(focusLogs: focusTimerManager.getFocusLogs())
-                .environmentObject(focusTimerManager)
-                .environmentObject(themeManager)
+            FocusLogView(
+                distractionStats: focusTimerManager.distractionStats,
+                distractionLogs: focusTimerManager.getDistractionLogs()
+            )
+            .environmentObject(focusTimerManager)
+            .environmentObject(themeManager)
         }
         .onAppear {
             // Initialize font loader

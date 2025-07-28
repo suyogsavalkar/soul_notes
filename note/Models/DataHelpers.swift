@@ -30,7 +30,7 @@ extension FileManager {
     /// Returns the app's documents directory for storing notes
     var notesDirectory: URL {
         let documentsPath = urls(for: .documentDirectory, in: .userDomainMask).first!
-        let notesPath = documentsPath.appendingPathComponent("NotesApp")
+        let notesPath = documentsPath.appendingPathComponent("Soul")
         
         // Create directory if it doesn't exist
         if !fileExists(atPath: notesPath.path) {

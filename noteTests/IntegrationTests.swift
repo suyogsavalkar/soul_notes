@@ -10,7 +10,7 @@ import XCTest
 
 final class IntegrationTests: XCTestCase {
     var noteManager: NoteManager!
-    var testCategory: Category!
+    var testCategory: note.Category!
     
     override func setUpWithError() throws {
         noteManager = NoteManager()

@@ -477,9 +477,306 @@
   - _Requirements: 16.2, 21.5, 23.2, 24.7_
 
 - [x] 48. Final integration and comprehensive testing
+
   - Test all new features working together seamlessly
   - Verify performance with focus monitoring and font size changes
   - Test app behavior during system events (sleep, app switching)
   - Validate data persistence for all new preference systems
   - Perform comprehensive user acceptance testing for all workflows
   - _Requirements: 14.3, 15.3, 17.3, 18.3, 19.3, 20.3, 21.5, 22.7, 23.8, 24.9_
+
+- [x] 49. Fix create note card visual consistency
+
+  - Update WelcomeView to use identical dimensions as NotePreviewCard
+  - Ensure create note card maintains square aspect ratio matching other cards
+  - Fix card compression issues by applying proper layout constraints
+  - Test create note card appearance in different grid configurations
+  - _Requirements: 25.1, 25.2, 25.3_
+
+- [x] 50. Implement note title improvements
+- [x] 50.1 Fix title positioning and styling
+
+  - Modify NoteEditorView to keep title field in fixed position
+  - Apply semibold font weight to title text field
+  - Prevent title field from moving when cursor is placed or focus changes
+  - Test title stability across different editing scenarios
+  - _Requirements: 26.1, 26.2_
+
+- [x] 50.2 Implement title character limit
+
+  - Add 45-character limit to title text field with input validation
+  - Implement character count tracking and input prevention beyond limit
+  - Add visual feedback for character limit (optional counter or styling)
+  - Test title truncation and limit enforcement
+  - _Requirements: 26.3, 26.4_
+
+- [x] 51. Fix note body cursor positioning
+
+  - Modify note body text editor to support click-to-position cursor placement
+  - Ensure cursor stays at insertion point during typing without auto-repositioning
+  - Fix text insertion to occur at current cursor position, not at end
+  - Test cursor behavior with various text editing scenarios (middle insertion, selection)
+  - _Requirements: 27.1, 27.2, 27.3, 27.4_
+
+- [x] 52. Reorganize sidebar layout
+
+  - Move focus and distraction metrics below dark/light mode toggle in SidebarView
+  - Update sidebar layout constraints to accommodate new metrics positioning
+  - Ensure proper styling and alignment of metrics with other sidebar elements
+  - Test sidebar layout with different window sizes and content states
+  - _Requirements: 28.1, 28.2, 28.3_
+
+- [x] 53. Enhance focus system behavior
+- [x] 53.1 Implement window-aware focus alerts
+
+  - Modify focus loss detection to show alerts on user's current window
+  - Update alert system to target active window instead of app window
+  - Handle edge cases where current window detection might fail
+  - Test alert positioning across different window configurations
+  - _Requirements: 29.1_
+
+- [x] 53.2 Adjust focus timing behavior
+
+  - Change typing detection timer from 15 seconds to 1 minute
+  - Modify timer restart logic to only begin after user returns to note editing
+  - Update focus system to start 1-minute timer only after distraction dialog dismissal
+  - Test timing behavior with various user interaction patterns
+  - _Requirements: 29.2, 29.3, 29.4_
+
+- [x] 54. Create simplified distraction logging system
+- [x] 54.1 Build new distraction log interface
+
+  - Create new FocusLogView with single window design for distraction statistics
+  - Implement bold number display for total, weekly, and monthly distractions avoided
+  - Add descriptive text below each statistic number on the same line
+  - Create chronological list showing date, time, and distraction reason
+  - Ensure proper window sizing that's not too small for content
+  - _Requirements: 30.1, 30.2, 30.3, 30.4, 30.5, 30.6, 30.7_
+
+- [x] 54.2 Update distraction data models
+
+  - Replace complex FocusLogEntry with simplified DistractionLogEntry model
+  - Create DistractionStats model for total, weekly, and monthly counts
+  - Implement DistractionType enum for tab changes vs custom reasons
+  - Add methods for calculating weekly and monthly statistics
+  - _Requirements: 30.2, 30.3, 30.4_
+
+- [x] 55. Implement accurate distraction recording
+- [x] 55.1 Create tab change detection and recording
+
+  - Implement automatic distraction recording when user changes tabs and returns
+  - Log tab change events with "Tab change" label in distraction field
+  - Count tab change returns as distractions avoided
+  - Test tab switching detection across different applications
+  - _Requirements: 31.1, 31.3_
+
+- [x] 55.2 Implement custom distraction reason handling
+
+  - Record user-provided distraction reasons in log with custom text
+  - Display custom reasons in distraction field instead of generic labels
+  - Count 1-minute activity in distraction dialog as user engagement
+  - Ensure custom reasons are properly stored and retrieved
+  - _Requirements: 31.2, 31.4, 31.5_
+
+- [x] 56. Create achievement sharing system
+- [x] 56.1 Implement hover interactions for statistics
+
+  - Add hover detection to total, weekly, and monthly distraction numbers
+  - Display "share your achievement" option on hover over each statistic
+  - Create hover state styling and interaction feedback
+  - Test hover behavior across different UI states
+  - _Requirements: 32.1, 32.2, 32.3_
+
+- [x] 56.2 Build achievement image generation
+
+  - Implement image generation system for achievement statistics
+  - Create macOS window-styled image templates for statistics
+  - Add download functionality for generated achievement images
+  - Handle image generation errors and provide user feedback
+  - Test image generation with different statistics values
+  - _Requirements: 32.4, 32.5_
+
+- [x] 57. Update focus timer manager for new requirements
+
+  - Modify FocusTimerManager to support new timing behavior (1-minute detection)
+  - Update distraction recording to use simplified DistractionLogEntry model
+  - Implement window-aware alert system integration
+  - Add support for tab change detection and automatic recording
+  - _Requirements: 29.2, 29.3, 31.1, 31.3_
+
+- [x] 58. Write comprehensive tests for issue fixes
+- [x] 58.1 Create unit tests for UI fixes
+
+  - Test create note card dimensions and layout consistency
+  - Test title character limit enforcement and positioning
+  - Test cursor positioning and text insertion in note body
+  - Test sidebar layout reorganization and metrics positioning
+  - _Requirements: 25.3, 26.4, 27.4, 28.3_
+
+- [x] 58.2 Create integration tests for focus system improvements
+
+  - Test window-aware alert system functionality
+  - Test new timing behavior for focus detection
+  - Test distraction recording accuracy for tab changes and custom reasons
+  - Test achievement sharing image generation and download
+  - _Requirements: 29.4, 31.5, 32.5_
+
+- [x] 59. Fix critical UI and functionality issues
+- [x] 59.1 Fix note title positioning and character count display
+
+  - Add proper margin-top to title field to prevent movement when cursor is placed
+  - Remove character count display (xx/45) from title area
+  - Ensure title field remains stable during editing
+  - Test title positioning across different editing scenarios
+  - _Requirements: 26.1, 26.2_
+
+- [x] 59.2 Fix note body cursor positioning
+
+  - Implement proper cursor placement that allows editing anywhere in text
+  - Prevent cursor from jumping to end when typing in middle of text
+  - Ensure text insertion occurs at cursor position, not at end
+  - Test cursor behavior with click-to-position and keyboard navigation
+  - _Requirements: 27.1, 27.2, 27.3, 27.4_
+
+- [x] 59.3 Fix focus system distraction recording
+
+  - Implement 1-minute typing inactivity detection (changed from current timing)
+  - Record custom distraction reasons in focus log instead of generic "tab change"
+  - Show user-provided reason in distraction log entries
+  - Ensure distractions from typing inactivity are properly recorded
+  - _Requirements: 29.2, 31.2, 31.4_
+
+- [x] 59.4 Fix achievement sharing functionality
+
+  - Implement working image download for "share your achievement" button
+  - Create proper image generation with macOS window styling
+  - Add error handling for image generation and download failures
+  - Test image download across different statistics (total, weekly, monthly)
+  - _Requirements: 32.4, 32.5_
+
+- [x] 59.5 Rename application to "Soul"
+
+  - Update app name from "note" to "Soul" in all relevant files
+  - Modify Info.plist to reflect new app name
+  - Update any hardcoded references to old app name
+  - Ensure app displays as "Soul" in macOS system
+  - _Requirements: 12.1_
+
+- [x] 60. Fix achievement sharing file permissions
+
+  - Update achievement image download to save to user's Downloads folder
+  - Implement proper file permissions for downloaded images
+  - Add error handling for file system permission issues
+  - Test image download functionality across different user permission scenarios
+  - _Requirements: 32.4_
+
+- [x] 61. Fix note title positioning and styling
+- [x] 61.1 Implement stable title positioning
+
+  - Modify NoteEditorView title field to prevent vertical movement during editing
+  - Add proper margins and constraints to keep title in fixed position
+  - Ensure title field doesn't move when cursor is placed or focus changes
+  - Test title stability across different editing scenarios
+  - _Requirements: 33.1, 33.3, 33.4_
+
+- [x] 61.2 Update title font styling
+
+  - Change title font from semibold to bold weight
+  - Update title font size from current size to 36px
+  - Ensure consistent bold styling across all title displays
+  - Test title readability and visual hierarchy with new styling
+  - _Requirements: 33.2_
+
+- [x] 62. Fix note body cursor positioning
+
+  - Implement proper click-to-position cursor placement in note body
+  - Ensure cursor stays at clicked position during typing
+  - Prevent automatic cursor movement to end of text during editing
+  - Fix text insertion to occur at current cursor position
+  - Test cursor behavior with various text editing scenarios
+  - _Requirements: 34.1, 34.2, 34.3, 34.4_
+
+- [x] 63. Implement distraction log export functionality
+- [x] 63.1 Create distraction log export system
+
+  - Build DistractionExportManager class for handling log exports
+  - Implement text file generation with formatted distraction data
+  - Add date, time, and reason formatting for readability
+  - Create file download functionality to user's Downloads folder
+  - _Requirements: 35.2_
+
+- [x] 63.2 Add export UI to distraction log view
+
+  - Add "Get diagnosed by ChatGPT" button next to "Recent Distractions" header
+  - Implement button click handler to trigger log export
+  - Create success message display after successful download
+  - Add "Go to ChatGPT" button with link icon in success message
+  - Implement ChatGPT website opening functionality
+  - _Requirements: 35.1, 35.3, 35.4, 35.5_
+
+- [x] 64. Create note reflection modal system
+- [x] 64.1 Build note reflection modal interface
+
+  - Create NoteReflectionView modal dialog component
+  - Implement large modal sizing with proper responsive layout
+  - Add scrollable text area for displaying note content
+  - Style modal with theme-aware colors and consistent design
+  - _Requirements: 36.2, 36.3_
+
+- [x] 64.2 Add reflection functionality
+
+  - Implement copy to clipboard functionality for note content
+  - Add "Go to ChatGPT" button at bottom of modal
+  - Create ChatGPT website opening functionality
+  - Format note content appropriately for AI analysis
+  - _Requirements: 36.4, 36.5, 36.6_
+
+- [x] 64.3 Integrate reflection modal with note editor
+
+  - Add "Reflect with AI" button next to timer controls in note editor
+  - Implement modal presentation when button is clicked
+  - Pass current note content to reflection modal
+  - Test modal integration with existing note editor functionality
+  - _Requirements: 36.1_
+
+- [x] 65. Rebrand application to "Solo"
+- [x] 65.1 Update application name and branding
+
+  - Change app name from "note" to "Solo" in Info.plist
+  - Update app display name in macOS system
+  - Replace any hardcoded references to old app name throughout codebase
+  - Update app bundle identifier if necessary
+  - _Requirements: 37.1, 37.3_
+
+- [x] 65.2 Integrate new logo
+
+  - Locate and import logo files from specified logo folder (/Users/suyog/Suyog/Important/note/notelogo)
+  - Update app icon assets with new Solo logo
+  - Ensure logo displays correctly in dock and applications folder
+  - Test logo appearance across different macOS display settings
+  - _Requirements: 37.2, 37.4_
+
+- [x] 66. Write comprehensive tests for new features
+- [x] 66.1 Create unit tests for new functionality
+
+  - Test DistractionExportManager file generation and formatting
+  - Test note reflection modal content handling and clipboard operations
+  - Test achievement sharing file permission handling
+  - Verify cursor positioning fixes in note body editor
+  - _Requirements: 32.4, 34.4, 35.2, 36.4_
+
+- [x] 66.2 Create integration tests for new workflows
+
+  - Test complete distraction log export and ChatGPT navigation workflow
+  - Test note reflection modal presentation and interaction workflow
+  - Test achievement sharing download and success message workflow
+  - Verify title positioning stability across different editing scenarios
+  - _Requirements: 33.4, 35.5, 36.6, 32.5_
+
+- [x] 67. Final integration testing for all new features
+  - Test all new features working together without conflicts
+  - Verify performance impact of changes is minimal
+  - Test user workflows end-to-end with all improvements
+  - Validate file system operations work correctly across different user environments
+  - Perform comprehensive user acceptance testing for all new functionality
+  - _Requirements: 33.4, 34.4, 35.5, 36.6, 37.4_

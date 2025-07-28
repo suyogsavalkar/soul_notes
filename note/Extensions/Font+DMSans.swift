@@ -80,6 +80,11 @@ extension Font {
         return Font.custom("DMSans-Medium", size: size)
     }
     
+    /// DM Sans SemiBold font with specified size
+    static func dmSansSemiBold(size: CGFloat) -> Font {
+        return Font.custom("DMSans-SemiBold", size: size)
+    }
+    
     /// DM Sans Bold font with specified size
     static func dmSansBold(size: CGFloat) -> Font {
         return Font.custom("DMSans-Bold", size: size)

@@ -6,6 +6,7 @@
 //
 
 import XCTest
+import SwiftUI
 @testable import note
 
 final class ThemeManagerTests: XCTestCase {

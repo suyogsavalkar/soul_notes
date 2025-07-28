@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "note",
+    name: "Solo",
     platforms: [
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "note", targets: ["note"])
+        .executable(name: "Solo", targets: ["note"])
     ],
     targets: [
         .executableTarget(

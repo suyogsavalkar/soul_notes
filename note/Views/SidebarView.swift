@@ -53,10 +53,10 @@ struct SidebarView: View {
             
             Spacer()
             
-            // Bottom section with Add Space and Dark mode toggle
+            // Bottom section with Add Space, Dark mode toggle, and Focus statistics
             VStack(spacing: 12) {
                 // Add new Space button
-                if let onCategoryAdd = onCategoryAdd {
+                if onCategoryAdd != nil {
                     HStack {
                         Button(action: {
                             showingCategoryCreation = true
@@ -84,15 +84,6 @@ struct SidebarView: View {
                         .accessibilityHint("Creates a new category space")
                     }
                     .padding(.horizontal, 8)
-                }
-                
-                // Focus statistics
-                if let onFocusStatsClick = onFocusStatsClick {
-                    FocusStatsView(
-                        focusStats: focusTimerManager.focusStats,
-                        onTapStats: onFocusStatsClick
-                    )
-                    .environmentObject(themeManager)
                 }
                 
                 // Dark mode toggle
@@ -123,6 +114,16 @@ struct SidebarView: View {
                     .accessibilityHint("Toggles between light and dark theme")
                 }
                 .padding(.horizontal, 8)
+                
+                // Focus statistics (moved below dark mode toggle)
+                if let onFocusStatsClick = onFocusStatsClick {
+                    FocusStatsView(
+                        focusStats: focusTimerManager.focusStats,
+                        distractionStats: focusTimerManager.distractionStats,
+                        onTapStats: onFocusStatsClick
+                    )
+                    .environmentObject(themeManager)
+                }
             }
             .padding(.bottom, 16)
         }
@@ -173,7 +174,7 @@ struct CategoryRowView: View {
         .buttonStyle(PlainButtonStyle())
         .padding(.horizontal, 8)
         .contextMenu {
-            if let onDelete = onDelete, category.name != "General" {
+            if onDelete != nil, category.name != "General" {
                 Button(action: {
                     showingDeleteConfirmation = true
                 }) {

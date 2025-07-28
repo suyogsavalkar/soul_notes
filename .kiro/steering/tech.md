@@ -2,106 +2,105 @@
 inclusion: always
 ---
 
-# Technology Stack & Development Guidelines
+# Technical Implementation Guidelines
 
-## Core Technologies
+## Technology Stack
 
-- **SwiftUI** - Primary UI framework for all views and components
-- **Swift 5.9+** - Programming language with modern concurrency support
-- **macOS 13.0+** - Target platform with native system integration
-- **Xcode 15+** - Required development environment
+- **SwiftUI + Swift 5.9+** for macOS 13.0+ target
+- **MVVM + Services architecture** with dependency injection
+- **File-based JSON persistence** using `Codable`
 
-## Architecture Requirements
+## Critical Architecture Rules
 
-### MVVM Pattern Implementation
+### MVVM Pattern (Strict)
 
-- **Models**: Use `struct` with `Codable` and `Identifiable` protocols
-- **Views**: Pure SwiftUI components, no business logic
-- **Services**: Act as ViewModels using `@ObservableObject` and `@Published`
-- **Data Binding**: Use `@StateObject` for ownership, `@ObservedObject` for injection
+- **Models**: `struct` with `Codable, Identifiable` - data only, no logic
+- **Views**: Pure SwiftUI - observe services, never mutate data directly
+- **Services**: `@ObservableObject` classes - all business logic and state
+- **Binding**: `@StateObject` for ownership, `@ObservedObject` for injection
 
-### Service Layer Pattern
-
-- All business logic resides in Services (e.g., `NoteManager`, `ThemeManager`)
-- Services communicate via `@Published` properties and Combine publishers
-- Use dependency injection for testability
-- Centralize error handling through `ErrorHandler` service
-
-### Data Persistence
-
-- File-based JSON storage using `FileManager` and `Codable`
-- Auto-save with debounced writes (300ms delay)
-- Atomic file operations to prevent data corruption
-- Graceful fallback for corrupted data files
-
-## Code Style Rules
-
-### SwiftUI Conventions
+### Property Wrapper Usage
 
 ```swift
-// ✅ Correct: Explicit types for public APIs
-@Published var notes: [Note] = []
+@State          // Local UI state only (toggles, text fields)
+@StateObject    // Service ownership in root views
+@ObservedObject // Service injection in child views
+@Published      // Observable data in services
+@AppStorage     // User preferences only
+```
 
-// ✅ Correct: Struct for data models
+### Service Layer Requirements
+
+- All business logic in Services (`NoteManager`, `ThemeManager`, etc.)
+- Services communicate via `@Published` properties
+- Use `ErrorHandler` service for centralized error handling
+- Implement dependency injection for testability
+
+## Code Patterns (Required)
+
+### Data Models
+
+```swift
 struct Note: Codable, Identifiable {
     let id: UUID
     var title: String
     var content: String
-}
-
-// ✅ Correct: Observable service class
-class NoteManager: ObservableObject {
-    @Published var notes: [Note] = []
+    // Computed properties only - no methods
 }
 ```
 
-### Property Wrapper Usage
-
-- `@State` - Local UI state only (toggles, text input)
-- `@StateObject` - Service ownership in root views
-- `@ObservedObject` - Service injection in child views
-- `@Published` - Observable data in services
-- `@AppStorage` - User preferences and settings
-
-### Error Handling Pattern
+### Service Classes
 
 ```swift
-// ✅ Use Result type for operations that can fail
-func saveNote(_ note: Note) -> Result<Void, NoteError> {
-    // Implementation
-}
+class NoteManager: ObservableObject {
+    @Published var notes: [Note] = []
 
-// ✅ Handle errors gracefully in UI
-.onReceive(noteManager.errorPublisher) { error in
-    errorHandler.handle(error)
+    func saveNote(_ note: Note) -> Result<Void, NoteError> {
+        // Use Result type for operations that can fail
+    }
 }
 ```
 
-## Performance Guidelines
+### Error Handling
 
-- Use `PerformanceOptimizer.debounce()` for text input (300ms)
-- Implement lazy loading for large collections
-- Cache expensive computations using `PerformanceOptimizer.cache()`
-- Prefer `LazyVGrid` over `VStack` for large datasets
+- Use `Result<T, Error>` for failable operations
+- Handle all errors through `ErrorHandler` service
+- Never crash - provide fallback states
 
-## Development Commands
+## Performance Requirements
 
-### Build & Test
+### Text Input & Auto-Save
+
+- Use `PerformanceOptimizer.debounce()` with 300ms delay
+- Auto-save with debounced writes to prevent data loss
+- Atomic file operations to prevent corruption
+
+### UI Performance
+
+- Use `LazyVGrid` for large collections, never `VStack`
+- Cache expensive computations via `PerformanceOptimizer.cache()`
+- Implement lazy loading for large datasets
+
+## Code Quality Standards
+
+### Required Practices
+
+- Explicit type annotations for all public APIs
+- `// MARK:` comments to organize code sections
+- Unit tests for all service methods
+- Follow Swift naming conventions strictly
+
+### File Organization
+
+- Models in `Models/` - data structures only
+- Views in `Views/` - pure SwiftUI components
+- Services in `Services/` - business logic and state
+- Extensions in `Extensions/` - shared functionality
+
+## Build Commands
 
 ```bash
-# Build project
+# Build and test
 xcodebuild -project note.xcodeproj -scheme note build
-
-# Run all tests
 xcodebuild test -project note.xcodeproj -scheme note -destination 'platform=macOS'
-
-# Run specific test suite
-xcodebuild test -project note.xcodeproj -scheme note -only-testing:noteTests
 ```
-
-### Code Quality
-
-- All public APIs must have explicit type annotations
-- Use `// MARK:` comments to organize code sections
-- Follow Swift naming conventions strictly
-- Write unit tests for all service methods

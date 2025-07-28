@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FocusStatsView: View {
     let focusStats: FocusStats
+    let distractionStats: DistractionStats
     let onTapStats: () -> Void
     @EnvironmentObject var themeManager: ThemeManager
     
@@ -44,7 +45,7 @@ struct FocusStatsView: View {
                         .font(.system(size: 14))
                         .foregroundColor(themeManager.accentColor)
                     
-                    Text("\(focusStats.distractionsAvoided) distractions avoided")
+                    Text("\(distractionStats.totalDistractionsAvoided) distractions avoided")
                         .font(.dmSans(size: 12))
                         .foregroundColor(themeManager.secondaryTextColor)
                     
@@ -76,6 +77,7 @@ struct FocusStatsView: View {
     
     FocusStatsView(
         focusStats: sampleStats,
+        distractionStats: DistractionStats(totalDistractionsAvoided: 7),
         onTapStats: { print("Stats tapped") }
     )
     .environmentObject(ThemeManager())
