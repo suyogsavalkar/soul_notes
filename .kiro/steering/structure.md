@@ -1,69 +1,96 @@
----
-inclusion: always
----
+# Project Structure
 
-# Architecture & Structure Guidelines
+## Root Level
+- `Package.swift` - Swift Package Manager configuration
+- `note.xcodeproj/` - Xcode project files and workspace
+- `note/` - Main application source code
+- `noteTests/` - Unit test files
+- `noteUITests/` - UI test files
 
-## File Organization
+## Main Application Structure (`note/`)
 
-### Directory Structure (MVVM + Services Pattern)
+### Core Application
+- `noteApp.swift` - App entry point (@main struct SoulApp)
+- `ContentView.swift` - Legacy content view (not actively used)
+- `note.entitlements` - App entitlements and permissions
+- `Info.plist` - App configuration and font registration
 
-- `Models/` - Data structs with `Codable`, `Identifiable`
-- `Views/` - Pure SwiftUI components, no business logic
-- `Services/` - `@ObservableObject` classes for state management
-- `Extensions/` - Type extensions for shared functionality
-- `Utilities/` - Pure helper functions and classes
-- `Resources/` - Static assets (fonts, images)
+### Models (`note/Models/`)
+Data structures and business logic models:
+- `Note.swift` - Core note model with Identifiable, Codable
+- `Category.swift` - Category model with default categories
+- `DataHelpers.swift` - Data manipulation utilities
 
-### Naming Conventions
+### Views (`note/Views/`)
+SwiftUI view components organized by functionality:
+- `MainView.swift` - Primary app container view
+- `NoteEditorView.swift` - Main note editing interface
+- `SidebarView.swift` - Category navigation sidebar
+- `NotesGridView.swift` - Grid display of notes
+- `NotePreviewCard.swift` - Individual note preview cards
+- `WelcomeView.swift` - First-time user experience
+- `CategoryCreationView.swift` - Category management interface
+- `SFSymbolPicker.swift` - Icon selection for categories
+- `FocusLogView.swift` - Focus session history
+- `FocusStatsView.swift` - Focus productivity statistics
+- `FocusTimerControl.swift` - Timer interface controls
+- `NoteReflectionView.swift` - AI reflection interface
+- `CleanEditorLayout.swift` - Editor layout wrapper
+- `EditorTopBar.swift` - Editor toolbar
+- `ImprovedBodyEditor.swift` - Enhanced text editor
+- `NaturalTextEditor.swift` - Natural text input handling
+- `StableTitleField.swift` - Stable title input field
+- `TooltipModifier.swift` - Tooltip UI modifier
 
-- **Views**: `[Feature][Component]View.swift` (e.g., `NoteEditorView.swift`)
-- **Models**: `[Entity].swift` (e.g., `Note.swift`, `Category.swift`)
-- **Services**: `[Feature]Manager.swift` (e.g., `NoteManager.swift`, `ThemeManager.swift`)
-- **Extensions**: `[Type]+[Feature].swift` (e.g., `Color+Theme.swift`)
+### Services (`note/Services/`)
+Business logic and state management:
+- `NoteManager.swift` - Note CRUD operations
+- `ThemeManager.swift` - Theme and appearance management
+- `FontSizeManager.swift` - Font size preferences
+- `FocusTimerManager.swift` - Focus session management
+- `FocusManager.swift` - Focus state coordination
+- `SaveStateManager.swift` - Auto-save functionality
+- `ErrorHandler.swift` - Global error handling
+- `EditorErrorHandler.swift` - Editor-specific error handling
+- `AchievementScreenshotManager.swift` - Achievement system
 
-## Architecture Rules
+### Extensions (`note/Extensions/`)
+Swift extensions for enhanced functionality:
+- `Font+DMSans.swift` - Custom font definitions
+- `Color+Theme.swift` - Theme color extensions
+- `DesignConstants.swift` - UI constants and measurements
 
-### MVVM Implementation
+### Utilities (`note/Utilities/`)
+Helper classes and utility functions:
+- `FontLoader.swift` - Custom font loading
+- `PerformanceOptimizer.swift` - Performance optimization utilities
+- `WordCountCalculator.swift` - Text analysis utilities
 
-- **Models**: Immutable `struct` with computed properties only
-- **Views**: Pure SwiftUI, observe services via `@StateObject`/`@ObservedObject`
-- **Services**: Act as ViewModels using `@Published` properties
-- **State**: Use `@State` only for local UI state (toggles, text input)
+### Resources (`note/Resources/`)
+Static assets and resources:
+- `Fonts/` - DM Sans font family files (Regular, Medium, Bold, etc.)
+- Multiple font weights and sizes (18pt, 24pt, 36pt variants)
 
-### Data Flow
+### Assets (`note/Assets.xcassets/`)
+- `AppIcon.appiconset/` - Application icon assets
+- `AccentColor.colorset/` - App accent color definition
+- `Contents.json` - Asset catalog configuration
 
-- Services own and mutate data via `@Published` properties
-- Views observe services, never directly mutate models
-- Pass data down, events up through the view hierarchy
-- Use `@StateObject` for service ownership, `@ObservedObject` for injection
+## Naming Conventions
 
-### Error Handling
+### Files
+- **Views**: Descriptive names ending with "View" (e.g., `NoteEditorView.swift`)
+- **Models**: Singular nouns (e.g., `Note.swift`, `Category.swift`)
+- **Services**: Descriptive names ending with "Manager" (e.g., `ThemeManager.swift`)
+- **Extensions**: Base type + functionality (e.g., `Font+DMSans.swift`)
 
-- All user-facing errors through centralized `ErrorHandler` service
-- Use `Result<T, Error>` for operations that can fail
-- Provide fallback states, never crash the app
+### Code Organization
+- **One class/struct per file** - Each Swift file contains a single primary type
+- **Related functionality grouped** - Helper types and extensions in same file as primary type
+- **Preview providers** - Each view file includes #Preview for SwiftUI previews
+- **MARK comments** - Used to organize code sections within files
 
-## Development Patterns
-
-### Adding New Features
-
-1. Create model in `Models/` if new data structure needed
-2. Add/extend service in `Services/` for business logic
-3. Create views in `Views/` that observe the service
-4. Add reusable components to `Extensions/`
-5. Write corresponding tests in `noteTests/`
-
-### Performance Requirements
-
-- Use `PerformanceOptimizer.debounce()` for text input (300ms)
-- Implement lazy loading with `LazyVGrid` for large collections
-- Cache expensive computations via `PerformanceOptimizer.cache()`
-- Auto-save with debounced writes to prevent data loss
-
-### Code Quality
-
-- All public APIs must have explicit type annotations
-- Use `// MARK:` comments to organize code sections
-- Follow dependency injection pattern for testability
-- Write unit tests for all service methods
+## Test Structure
+- `noteTests/` - Unit tests mirroring main app structure
+- `noteUITests/` - UI automation tests
+- Test files follow naming pattern: `[ComponentName]Tests.swift`

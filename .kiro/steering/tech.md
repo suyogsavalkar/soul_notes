@@ -1,106 +1,62 @@
----
-inclusion: always
----
+# Technology Stack
 
-# Technical Implementation Guidelines
+## Build System & Platform
+- **Swift Package Manager** - Primary build system (Package.swift)
+- **Swift 5.9+** - Language version requirement
+- **macOS 13.0+** - Minimum deployment target
+- **Xcode Project** - Development environment with .xcodeproj structure
 
-## Technology Stack
+## Frameworks & Libraries
+- **SwiftUI** - Primary UI framework for all views and components
+- **Foundation** - Core system services and data types
+- **Combine** - Reactive programming for state management (ThemeManager uses @Published)
 
-- **SwiftUI + Swift 5.9+** for macOS 13.0+ target
-- **MVVM + Services architecture** with dependency injection
-- **File-based JSON persistence** using `Codable`
+## Architecture Patterns
+- **MVVM** - Model-View-ViewModel pattern with ObservableObject classes
+- **Environment Objects** - Shared state management (ThemeManager, FontSizeManager, FocusTimerManager)
+- **State Management** - @State, @Binding, @StateObject for local component state
+- **Service Layer** - Dedicated service classes for business logic (NoteManager, ErrorHandler, etc.)
 
-## Critical Architecture Rules
+## Custom Typography
+- **DM Sans Font Family** - Custom font loaded from Resources/Fonts/
+- Font variants: Regular, Medium, SemiBold, Bold
+- Configured in Info.plist with UIAppFonts and ATSApplicationFontsPath
 
-### MVVM Pattern (Strict)
+## Data Persistence
+- **JSON Encoding/Decoding** - Custom encoders/decoders for Note and Category models
+- **FileManager** - Local file system storage for notes and preferences
+- **UserDefaults equivalent** - Theme preferences stored as JSON files
 
-- **Models**: `struct` with `Codable, Identifiable` - data only, no logic
-- **Views**: Pure SwiftUI - observe services, never mutate data directly
-- **Services**: `@ObservableObject` classes - all business logic and state
-- **Binding**: `@StateObject` for ownership, `@ObservedObject` for injection
+## Common Development Commands
 
-### Property Wrapper Usage
-
-```swift
-@State          // Local UI state only (toggles, text fields)
-@StateObject    // Service ownership in root views
-@ObservedObject // Service injection in child views
-@Published      // Observable data in services
-@AppStorage     // User preferences only
-```
-
-### Service Layer Requirements
-
-- All business logic in Services (`NoteManager`, `ThemeManager`, etc.)
-- Services communicate via `@Published` properties
-- Use `ErrorHandler` service for centralized error handling
-- Implement dependency injection for testability
-
-## Code Patterns (Required)
-
-### Data Models
-
-```swift
-struct Note: Codable, Identifiable {
-    let id: UUID
-    var title: String
-    var content: String
-    // Computed properties only - no methods
-}
-```
-
-### Service Classes
-
-```swift
-class NoteManager: ObservableObject {
-    @Published var notes: [Note] = []
-
-    func saveNote(_ note: Note) -> Result<Void, NoteError> {
-        // Use Result type for operations that can fail
-    }
-}
-```
-
-### Error Handling
-
-- Use `Result<T, Error>` for failable operations
-- Handle all errors through `ErrorHandler` service
-- Never crash - provide fallback states
-
-## Performance Requirements
-
-### Text Input & Auto-Save
-
-- Use `PerformanceOptimizer.debounce()` with 300ms delay
-- Auto-save with debounced writes to prevent data loss
-- Atomic file operations to prevent corruption
-
-### UI Performance
-
-- Use `LazyVGrid` for large collections, never `VStack`
-- Cache expensive computations via `PerformanceOptimizer.cache()`
-- Implement lazy loading for large datasets
-
-## Code Quality Standards
-
-### Required Practices
-
-- Explicit type annotations for all public APIs
-- `// MARK:` comments to organize code sections
-- Unit tests for all service methods
-- Follow Swift naming conventions strictly
-
-### File Organization
-
-- Models in `Models/` - data structures only
-- Views in `Views/` - pure SwiftUI components
-- Services in `Services/` - business logic and state
-- Extensions in `Extensions/` - shared functionality
-
-## Build Commands
-
+### Building
 ```bash
-# Build and test
+# Build the project
+swift build
+
+# Run the executable
+swift run
+```
+
+### Xcode Development
+```bash
+# Open project in Xcode
+open note.xcodeproj
+
+# Build and run from command line
 xcodebuild -project note.xcodeproj -scheme note build
+```
+
+### Testing
+```bash
+# Run unit tests
+swift test
+
+# Run specific test target
 xcodebuild test -project note.xcodeproj -scheme note -destination 'platform=macOS'
 ```
+
+## Key Dependencies
+- No external package dependencies - uses only system frameworks
+- Custom font files bundled in Resources/Fonts/
+- SF Symbols for iconography throughout the app

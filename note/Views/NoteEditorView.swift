@@ -9,17 +9,25 @@ import SwiftUI
 
 struct NoteEditorView: View {
     @Binding var note: Note
-    @State private var hasUnsavedChanges: Bool = false
     @State private var originalNote: Note
-    @State private var autoSaveTimer: Timer?
-    private let autoSaveDebouncer = PerformanceOptimizer.Debouncer(delay: 0.5)
+    @State private var editorState = EditorState()
+    @State private var showReflectWithAI = false
+    @State private var lastTypingTime: Date = Date()
+    @State private var typingTimer: Timer?
+    
+    // Focus management
+    @FocusState private var titleFocused: Bool
+    @FocusState private var bodyFocused: Bool
+    @StateObject private var focusManager = FocusManager()
+    
+    // State management
+    @StateObject private var saveStateManager = SaveStateManager()
+    @StateObject private var errorHandler = EditorErrorHandler()
+    
+    // Environment objects
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var fontSizeManager: FontSizeManager
     @EnvironmentObject var focusTimerManager: FocusTimerManager
-    @State private var lastTypingTime: Date = Date()
-    @State private var typingTimer: Timer?
-    @State private var showReflectWithAI = false
-    @FocusState private var isBodyFocused: Bool
     
     let onSave: () -> Void
     let onToggleSidebar: () -> Void
@@ -31,180 +39,94 @@ struct NoteEditorView: View {
         self.onToggleSidebar = onToggleSidebar
     }
     
+    // MARK: - Computed Properties
+    
+    /// Combined word count of title and body content
+    var wordCount: Int {
+        return WordCountCalculator.combinedWordCount(title: note.title, body: note.body)
+    }
+    
+    /// Whether the "Reflect with AI" button should be enabled (150+ words required)
+    var isReflectButtonEnabled: Bool {
+        return WordCountCalculator.isReflectButtonEnabled(title: note.title, body: note.body)
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Top bar with sidebar toggle and font size control
-            HStack(spacing: 16) {
-                Button(action: onToggleSidebar) {
-                    Image(systemName: "sidebar.left")
-                        .font(.system(size: 16))
-                        .foregroundColor(themeManager.textColor)
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                // Font size control
-                Button(action: {
-                    fontSizeManager.cycleFontSize()
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "textformat.size")
-                            .font(.system(size: 14))
-                            .foregroundColor(themeManager.textColor)
-                        
-                        Text("\(Int(fontSizeManager.currentBodyFontSize))px")
-                            .font(.system(size: 12))
-                            .foregroundColor(themeManager.secondaryTextColor)
+            // Top bar with all controls
+            EditorTopBar(
+                wordCount: wordCount,
+                hasUnsavedChanges: saveStateManager.shouldShowSaveButton,
+                onToggleSidebar: onToggleSidebar,
+                onSave: {
+                    Task {
+                        await performSave()
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(themeManager.secondaryTextColor.opacity(0.1))
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel("Change font size")
-                .accessibilityHint("Current size: \(Int(fontSizeManager.currentBodyFontSize)) pixels")
-                
-                // Focus timer control
-                FocusTimerControl()
-                    .environmentObject(focusTimerManager)
-                    .environmentObject(themeManager)
-                
-                // Reflect with AI button
-                Button("Reflect with AI") {
+                },
+                onReflectWithAI: {
                     showReflectWithAI = true
                 }
-                .font(.dmSans(size: 12))
-                .foregroundColor(themeManager.accentColor)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(themeManager.accentColor.opacity(0.1))
-                )
-                .buttonStyle(PlainButtonStyle())
-                
-                Spacer()
-            }
-            .padding(.leading, 16)
-            .padding(.vertical, 12)
-            .background(themeManager.backgroundColor)
-            .overlay(
-                Rectangle()
-                    .frame(height: 1)
-                    .foregroundColor(themeManager.dividerColor),
-                alignment: .bottom
             )
+            .environmentObject(themeManager)
+            .environmentObject(fontSizeManager)
+            .environmentObject(focusTimerManager)
             
-            // Editor content
-            GeometryReader { geometry in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Title field with stable positioning and bold 36px font
-                        VStack(alignment: .leading, spacing: 0) {
-                            TextField("Note title", text: Binding(
-                                get: { note.title },
-                                set: { newValue in
-                                    // Limit to 45 characters
-                                    if newValue.count <= 45 {
-                                        note.title = newValue
-                                    }
-                                }
-                            ))
-                            .font(.dmSansBold(size: 36)) // Bold 36px font as required
-                            .foregroundColor(themeManager.textColor)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .lineLimit(1)
-                            .truncationMode(.tail)
-                            .frame(height: 60, alignment: .leading) // Fixed height to accommodate 36px font with proper spacing
-                            .padding(.top, 40) // Increased top margin for stability and prevent movement
-                            .padding(.bottom, 20) // Bottom padding for visual separation
-                            .onChange(of: note.title) {
-                                handleContentChange()
-                                handleTypingActivity()
-                            }
+            // Editor content with clean layout
+            CleanEditorLayout {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Stable title field
+                    StableTitleField(
+                        title: $note.title,
+                        onTitleChange: {
+                            handleDebouncedUIUpdates()
+                        },
+                        onImmediateSave: {
+                            handleImmediateSave()
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading) // Fixed positioning
-                        .background(Color.clear) // Ensure stable background
-                        .clipped() // Prevent any overflow that might cause movement
-                        .fixedSize(horizontal: false, vertical: true) // Prevent vertical expansion
-                        
-                        // Body field with natural cursor positioning
-                        ZStack(alignment: .topLeading) {
-                            if note.body.isEmpty {
-                                Text("Start writing...")
-                                    .font(fontSizeManager.bodyFont)
-                                    .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
-                                    .padding(.top, 8)
-                                    .padding(.leading, 4)
-                                    .allowsHitTesting(false)
-                            }
-                            
-                            TextEditor(text: $note.body)
-                                .font(fontSizeManager.bodyFont)
-                                .foregroundColor(themeManager.textColor)
-                                .scrollContentBackground(.hidden)
-                                .background(Color.clear)
-                                .frame(minHeight: max(400, geometry.size.height - 200))
-                                .focused($isBodyFocused)
-                                .textSelection(.enabled) // Enable text selection and cursor positioning
-                                .multilineTextAlignment(.leading) // Ensure proper text alignment
-                                .onChange(of: note.body) { oldValue, newValue in
-                                    // Only handle content change, don't interfere with cursor position
-                                    // TextEditor naturally maintains cursor position during typing
-                                    handleContentChange()
-                                    handleTypingActivity()
-                                }
-                                .onTapGesture { _ in
-                                    // Set focus when tapping, TextEditor handles cursor positioning automatically
-                                    if !isBodyFocused {
-                                        isBodyFocused = true
-                                    }
-                                }
-                                .allowsHitTesting(true) // Ensure proper hit testing for cursor placement
-                        }
-                        
-                        Spacer(minLength: 100) // Extra space at bottom
-                    }
-                    .padding(.horizontal, responsivePadding(for: geometry.size.width))
-                    .padding(.top, 32)
-                    .frame(maxWidth: responsiveMaxWidth(for: geometry.size.width))
-                    .frame(maxWidth: .infinity) // Center the content
-                }
-            }
-            .background(themeManager.backgroundColor)
-            
-            // Save button overlay
-            if hasUnsavedChanges {
-                VStack {
-                    Spacer()
+                    )
+                    .focused($titleFocused)
+                    .managedFocus(focusManager, field: .title, themeManager: themeManager)
+                    .environmentObject(themeManager)
                     
-                    HStack {
-                        Spacer()
-                        
-                        Button(hasUnsavedChanges ? "Save Changes" : "Saved") {
-                            saveNote()
+                    // Improved body editor
+                    ImprovedBodyEditor(
+                        text: $note.body,
+                        fontSize: fontSizeManager.currentBodyFontSize,
+                        textColor: themeManager.textColor,
+                        minHeight: 300,
+                        onTextChange: { oldValue, newValue in
+                            // Only validate and update state after debounced changes
+                            if errorHandler.validateTextInput(newValue, field: "body") {
+                                handleDebouncedUIUpdates()
+                            }
+                        },
+                        onImmediateSave: { oldValue, newValue in
+                            handleImmediateSave()
                         }
-                        .buttonStyle(SaveButtonStyle(isSaved: !hasUnsavedChanges))
-                        .keyboardShortcut("s", modifiers: .command)
-                        
-                        Spacer()
-                    }
-                    .padding(.bottom, 20)
+                    )
+                    .focused($bodyFocused)
+                    .managedFocus(focusManager, field: .body, themeManager: themeManager)
+                    .environmentObject(themeManager)
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .animation(.easeInOut(duration: 0.3), value: hasUnsavedChanges)
             }
+            .environmentObject(themeManager)
         }
         .background(themeManager.backgroundColor)
         .onAppear {
-            originalNote = note
+            setupEditor()
         }
         .onDisappear {
-            autoSaveTimer?.invalidate()
-            autoSaveDebouncer.cancel()
-            typingTimer?.invalidate()
+            cleanupEditor()
+        }
+        .onChange(of: titleFocused) { _, focused in
+            if focused {
+                focusManager.setFocus(to: .title)
+            }
+        }
+        .onChange(of: bodyFocused) { _, focused in
+            if focused {
+                focusManager.setFocus(to: .body)
+            }
         }
         .sheet(isPresented: $showReflectWithAI) {
             NoteReflectionView(
@@ -214,10 +136,33 @@ struct NoteEditorView: View {
             )
             .environmentObject(themeManager)
         }
+        .overlay(
+            EditorErrorAlert(errorHandler: errorHandler)
+        )
+    }
+    
+    // MARK: - Smart Debouncing Handlers
+    
+    private func handleImmediateSave() {
+        // Immediate save (0ms) - just persist the data
+        performSaveOperation()
+    }
+    
+    private func handleDebouncedUIUpdates() {
+        // UI updates (100ms) - word count, validation, etc.
+        updateEditorState()
+        handleFocusTimerUpdates()
+    }
+    
+    private func handleFocusTimerUpdates() {
+        // Focus timer updates (500ms) - less critical
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.handleTypingActivity()
+        }
     }
     
     private func handleContentChange() {
-        checkForChanges()
+        updateEditorState()
         scheduleAutoSave()
     }
     
@@ -237,75 +182,78 @@ struct NoteEditorView: View {
         }
     }
     
-    private func checkForChanges() {
-        hasUnsavedChanges = note.title != originalNote.title || note.body != originalNote.body
+    private func updateEditorState() {
+        editorState.update(
+            title: note.title,
+            body: note.body,
+            originalTitle: originalNote.title,
+            originalBody: originalNote.body
+        )
+        
+        // Update save state manager
+        if editorState.hasUnsavedChanges {
+            saveStateManager.markAsUnsaved()
+        }
     }
     
     private func scheduleAutoSave() {
-        autoSaveDebouncer.debounce {
-            if self.hasUnsavedChanges {
-                self.autoSave()
+        if editorState.hasUnsavedChanges {
+            saveStateManager.scheduleAutoSave {
+                self.performSaveOperation()
             }
         }
     }
     
-    private func autoSave() {
-        onSave()
-        originalNote = note
+    private func performSaveOperation() {
+        // Create content backup before saving
+        errorHandler.createContentBackup(title: note.title, body: note.body)
         
-        // Keep the save button visible briefly to show it was saved
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            hasUnsavedChanges = false
-        }
-    }
-    
-    private func saveNote() {
-        autoSaveTimer?.invalidate()
+        // Perform the actual save
         onSave()
+        
+        // Update state after successful save
         originalNote = note
-        hasUnsavedChanges = false
+        editorState.markAsSaved()
     }
     
-    // MARK: - Responsive Layout Helpers
-    
-    private func responsivePadding(for width: CGFloat) -> CGFloat {
-        if width < 600 {
-            return 20
-        } else if width < 900 {
-            return 30
-        } else {
-            return 40
+    private func performSave() async {
+        let success = await saveStateManager.performImmediateSave {
+            self.performSaveOperation()
+        }
+        
+        if !success {
+            // Handle save failure
+            errorHandler.handleError(.saveFailure(underlying: NSError(domain: "SaveError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to save note"])))
         }
     }
     
-    private func responsiveMaxWidth(for width: CGFloat) -> CGFloat {
-        if width < 600 {
-            return width - 40
-        } else if width < 900 {
-            return 700
-        } else {
-            return 800
+    private func setupEditor() {
+        originalNote = note
+        updateEditorState()
+        
+        // Set up focus recovery notification
+        NotificationCenter.default.addObserver(
+            forName: .editorFocusRecovery,
+            object: nil,
+            queue: .main
+        ) { _ in
+            self.focusManager.restorePreviousFocus()
         }
     }
+    
+    private func cleanupEditor() {
+        typingTimer?.invalidate()
+        focusManager.cleanup()
+        saveStateManager.reset()
+        
+        // Remove notification observer
+        NotificationCenter.default.removeObserver(self, name: .editorFocusRecovery, object: nil)
+    }
+    
+
 }
 
-struct SaveButtonStyle: ButtonStyle {
-    let isSaved: Bool
-    @EnvironmentObject var themeManager: ThemeManager
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.uiElement)
-            .foregroundColor(isSaved ? themeManager.secondaryTextColor : Color.black)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 12)
-            .background(isSaved ? themeManager.secondaryTextColor.opacity(0.1) : themeManager.accentColor)
-            .cornerRadius(8)
-            .shadow(color: Color.black.opacity(isSaved ? 0.05 : 0.1), radius: 4, x: 0, y: 2)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
+
 
 struct ReflectWithAIView: View {
     let noteContent: String

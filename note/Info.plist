@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleName</key>
-	<string>Soul</string>
+	<string>Solo</string>
 	<key>CFBundleDisplayName</key>
-	<string>Soul</string>
+	<string>Solo</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Resources/Fonts/DMSans-Regular.ttf</string>

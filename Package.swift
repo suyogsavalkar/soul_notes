@@ -2,17 +2,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "Solo",
+    name: "Soul",
     platforms: [
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "Solo", targets: ["note"])
+        .executable(name: "Soul", targets: ["note"])
     ],
     targets: [
         .executableTarget(
-            name: "note",
-            path: "note",
+            name: "Soul",
+            path: "soul",
             sources: [
                 "noteApp.swift",
                 "Views/MainView.swift",
