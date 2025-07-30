@@ -36,7 +36,7 @@ struct FocusStatsView: View {
                 )
                 .contentShape(Rectangle())
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(HoverButtonStyle())
             
             // Distractions avoided stat
             Button(action: onTapStats) {
@@ -59,7 +59,7 @@ struct FocusStatsView: View {
                 )
                 .contentShape(Rectangle())
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(HoverButtonStyle())
         }
         .accessibilityLabel("Focus statistics")
         .accessibilityHint("Tap to view detailed focus logs")

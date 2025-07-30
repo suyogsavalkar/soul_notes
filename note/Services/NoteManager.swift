@@ -48,7 +48,7 @@ class NoteManager: ObservableObject {
     
     private let fileManager = FileManager.default
     private let errorHandler = ErrorHandler()
-    private let saveDebouncer = PerformanceOptimizer.Debouncer(delay: 0.5)
+    private let saveDebouncer = PerformanceOptimizer.Debouncer(delay: 0.2)
     private var notesCache: [UUID: [Note]] = [:]
     
     init() {
@@ -119,6 +119,16 @@ class NoteManager: ObservableObject {
     // MARK: - Data Saving
     
     func saveChanges() {
+        saveNotes()
+        saveCategories()
+    }
+    
+    /// Immediate synchronous save - use when data loss prevention is critical
+    func saveChangesImmediately() {
+        // Cancel any pending debounced saves
+        saveDebouncer.cancel()
+        
+        // Save immediately
         saveNotes()
         saveCategories()
     }
@@ -293,6 +303,51 @@ class NoteManager: ObservableObject {
     
     func notes(for category: Category) -> [Note] {
         return notes(for: category.id)
+    }
+    
+    /// Searches notes across all categories by title and content
+    func searchNotes(query: String) -> [Note] {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !trimmedQuery.isEmpty else {
+            return []
+        }
+        
+        let lowercaseQuery = trimmedQuery.lowercased()
+        
+        // Filter notes that match the query in title or body
+        let matchingNotes = notes.filter { note in
+            let titleMatch = note.title.lowercased().contains(lowercaseQuery)
+            let bodyMatch = note.body.lowercased().contains(lowercaseQuery)
+            return titleMatch || bodyMatch
+        }
+        
+        // Sort results by relevance: title matches first, then content matches
+        return matchingNotes.sorted { note1, note2 in
+            let title1Match = note1.title.lowercased().contains(lowercaseQuery)
+            let title2Match = note2.title.lowercased().contains(lowercaseQuery)
+            
+            // If one has title match and other doesn't, prioritize title match
+            if title1Match && !title2Match {
+                return true
+            } else if !title1Match && title2Match {
+                return false
+            }
+            
+            // If both have title matches or both don't, sort by modification date
+            return note1.modifiedAt > note2.modifiedAt
+        }
+    }
+    
+    /// Real-time search with debouncing for performance
+    func searchNotesRealtime(query: String, completion: @escaping ([Note]) -> Void) {
+        // Use existing debouncer for consistency
+        saveDebouncer.debounce {
+            let results = self.searchNotes(query: query)
+            DispatchQueue.main.async {
+                completion(results)
+            }
+        }
     }
     
     func notes(for categoryId: UUID) -> [Note] {

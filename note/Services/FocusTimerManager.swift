@@ -169,7 +169,6 @@ class FocusTimerManager: ObservableObject {
                 alert.beginSheetModal(for: currentWindow) { response in
                     if response == .alertFirstButtonReturn {
                         // Return button clicked - record as distraction avoided with tab change reason
-                        self.logEvent(.sessionReturn)
                         self.logDistractionAvoided(type: .tabChange, reason: "Switched away from app")
                         NSApp.activate(ignoringOtherApps: true)
                     } else {
@@ -189,7 +188,6 @@ class FocusTimerManager: ObservableObject {
                 // Fallback to modal if no window is available
                 let response = alert.runModal()
                 if response == .alertFirstButtonReturn {
-                    self.logEvent(.sessionReturn)
                     self.logDistractionAvoided(type: .tabChange, reason: "Switched away from app")
                     NSApp.activate(ignoringOtherApps: true)
                 } else {
@@ -344,7 +342,6 @@ class FocusTimerManager: ObservableObject {
     func calculateStats() -> FocusStats {
         var totalFocusTime: TimeInterval = 0
         var totalSessions = 0
-        var distractionsAvoided = 0
         
         for log in focusLogs {
             switch log.eventType {
@@ -353,14 +350,15 @@ class FocusTimerManager: ObservableObject {
                     totalFocusTime += duration
                     totalSessions += 1
                 }
-            case .sessionReturn:
-                distractionsAvoided += 1
             default:
                 break
             }
         }
         
         let averageSessionLength = totalSessions > 0 ? totalFocusTime / Double(totalSessions) : 0
+        
+        // Get distractions avoided count from distraction logs (single source of truth)
+        let distractionsAvoided = distractionLogs.filter { $0.wasAvoided }.count
         
         return FocusStats(
             totalFocusTime: totalFocusTime,
@@ -390,6 +388,19 @@ class FocusTimerManager: ObservableObject {
         return distractionLogs.sorted { $0.timestamp > $1.timestamp }
     }
     
+    // MARK: - Data Validation
+    
+    /// Validates and fixes any inconsistencies in the distraction counting
+    func validateAndFixDistractionCounts() {
+        // Recalculate all stats from source data
+        updateDistractionStats()
+        focusStats = calculateStats()
+        
+        // Save the corrected stats
+        saveFocusStats()
+        saveDistractionStats()
+    }
+    
     // MARK: - Distraction Logging
     
     func logDistractionAvoided(type: DistractionType, reason: String) {
@@ -401,8 +412,7 @@ class FocusTimerManager: ObservableObject {
         )
         distractionLogs.append(entry)
         
-        // Update statistics
-        distractionStats.totalDistractionsAvoided += 1
+        // Update statistics based on actual log data (single source of truth)
         updateDistractionStats()
         saveDistractionData()
     }
@@ -411,16 +421,22 @@ class FocusTimerManager: ObservableObject {
         let now = Date()
         let calendar = Calendar.current
         
+        // Calculate all stats from actual log data (single source of truth)
+        let avoidedDistractions = distractionLogs.filter { $0.wasAvoided }
+        
+        // Total count
+        distractionStats.totalDistractionsAvoided = avoidedDistractions.count
+        
         // Calculate weekly count (last 7 days)
         let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
-        distractionStats.weeklyDistractionsAvoided = distractionLogs.filter { 
-            $0.timestamp >= weekAgo && $0.wasAvoided 
+        distractionStats.weeklyDistractionsAvoided = avoidedDistractions.filter { 
+            $0.timestamp >= weekAgo
         }.count
         
         // Calculate monthly count (last 30 days)
         let monthAgo = calendar.date(byAdding: .day, value: -30, to: now) ?? now
-        distractionStats.monthlyDistractionsAvoided = distractionLogs.filter { 
-            $0.timestamp >= monthAgo && $0.wasAvoided 
+        distractionStats.monthlyDistractionsAvoided = avoidedDistractions.filter { 
+            $0.timestamp >= monthAgo
         }.count
         
         distractionStats.lastUpdated = now
@@ -470,6 +486,10 @@ class FocusTimerManager: ObservableObject {
         loadFocusLogs()
         loadFocusStats()
         loadDistractionData()
+        
+        // Recalculate stats to ensure consistency after loading
+        updateDistractionStats()
+        focusStats = calculateStats()
     }
     
     private func saveDistractionData() {

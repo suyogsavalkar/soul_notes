@@ -31,12 +31,14 @@ struct NoteEditorView: View {
     
     let onSave: () -> Void
     let onToggleSidebar: () -> Void
+    let onClose: () -> Void
     
-    init(note: Binding<Note>, onSave: @escaping () -> Void, onToggleSidebar: @escaping () -> Void) {
+    init(note: Binding<Note>, onSave: @escaping () -> Void, onToggleSidebar: @escaping () -> Void, onClose: @escaping () -> Void) {
         self._note = note
         self._originalNote = State(initialValue: note.wrappedValue)
         self.onSave = onSave
         self.onToggleSidebar = onToggleSidebar
+        self.onClose = onClose
     }
     
     // MARK: - Computed Properties
@@ -65,6 +67,13 @@ struct NoteEditorView: View {
                 },
                 onReflectWithAI: {
                     showReflectWithAI = true
+                },
+                onClose: {
+                    // Save before closing
+                    if editorState.hasUnsavedChanges {
+                        performSaveOperation()
+                    }
+                    onClose()
                 }
             )
             .environmentObject(themeManager)
@@ -242,6 +251,13 @@ struct NoteEditorView: View {
     }
     
     private func cleanupEditor() {
+        // CRITICAL: Save immediately before cleanup to prevent data loss
+        if editorState.hasUnsavedChanges {
+            performSaveOperation()
+            // Force immediate save to disk
+            onSave()
+        }
+        
         typingTimer?.invalidate()
         focusManager.cleanup()
         saveStateManager.reset()
@@ -369,7 +385,8 @@ struct ReflectWithAIView: View {
     return NoteEditorView(
         note: $sampleNote,
         onSave: { print("Save tapped") },
-        onToggleSidebar: { print("Toggle sidebar") }
+        onToggleSidebar: { print("Toggle sidebar") },
+        onClose: { print("Close tapped") }
     )
     .environmentObject(ThemeManager())
     .frame(width: 800, height: 600)

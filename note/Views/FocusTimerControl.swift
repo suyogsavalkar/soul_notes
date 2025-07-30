@@ -35,7 +35,7 @@ struct FocusTimerControl: View {
                     .fill(focusTimerManager.isTimerRunning ? themeManager.accentColor.opacity(0.1) : themeManager.secondaryTextColor.opacity(0.1))
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(HoverButtonStyle())
         .accessibilityLabel(focusTimerManager.isTimerRunning ? "Stop focus timer" : "Start focus timer")
         .accessibilityHint("Current duration: \(focusTimerManager.formattedSelectedDuration)")
         .onLongPressGesture {

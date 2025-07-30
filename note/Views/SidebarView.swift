@@ -31,6 +31,8 @@ struct SidebarView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 20)
             
+
+            
             // Categories list
             ScrollView {
                 LazyVStack(spacing: 4) {
@@ -79,7 +81,7 @@ struct SidebarView: View {
                             )
                             .contentShape(Rectangle())
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(HoverButtonStyle())
                         .accessibilityLabel("Add new Space")
                         .accessibilityHint("Creates a new category space")
                     }
@@ -109,7 +111,7 @@ struct SidebarView: View {
                         )
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(HoverButtonStyle())
                     .accessibilityLabel(themeManager.isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode")
                     .accessibilityHint("Toggles between light and dark theme")
                 }
@@ -171,7 +173,7 @@ struct CategoryRowView: View {
             )
             .contentShape(Rectangle())
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(HoverButtonStyle())
         .padding(.horizontal, 8)
         .contextMenu {
             if onDelete != nil, category.name != "General" {

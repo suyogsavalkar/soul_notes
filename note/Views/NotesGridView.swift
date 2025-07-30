@@ -12,37 +12,78 @@ struct NotesGridView: View {
     let onNoteSelect: (Note) -> Void
     let onCreateNote: () -> Void
     let onNoteDelete: ((Note) -> Void)?
+    let isSearchActive: Bool
+    let searchQuery: String
+    let showSearchBar: Bool
+    let onSearchChange: ((String) -> Void)?
     
     @State private var gridColumns: [GridItem] = []
+    @State private var searchText: String = ""
     @EnvironmentObject var themeManager: ThemeManager
+    
+    init(notes: [Note], onNoteSelect: @escaping (Note) -> Void, onCreateNote: @escaping () -> Void, onNoteDelete: ((Note) -> Void)? = nil, isSearchActive: Bool = false, searchQuery: String = "", showSearchBar: Bool = false, onSearchChange: ((String) -> Void)? = nil) {
+        self.notes = notes
+        self.onNoteSelect = onNoteSelect
+        self.onCreateNote = onCreateNote
+        self.onNoteDelete = onNoteDelete
+        self.isSearchActive = isSearchActive
+        self.searchQuery = searchQuery
+        self.showSearchBar = showSearchBar
+        self.onSearchChange = onSearchChange
+    }
     
     var body: some View {
         GeometryReader { geometry in
-            ScrollView {
-                LazyVGrid(columns: gridColumns, spacing: 12, pinnedViews: []) {
-                    // Create new note card
-                    CreateNoteCard(onTap: onCreateNote)
-                    
-                    // Existing notes with lazy loading
-                    ForEach(notes.indices, id: \.self) { index in
-                        NotePreviewCard(
-                            note: notes[index],
-                            onTap: {
-                                onNoteSelect(notes[index])
-                            },
-                            onDelete: onNoteDelete != nil ? {
-                                onNoteDelete?(notes[index])
-                            } : nil
-                        )
-                        .onAppear {
-                            // Preload next batch if needed
-                            if PerformanceOptimizer.shouldLoadMore(items: notes, currentIndex: index) {
-                                // Could implement pagination here if needed
+            VStack(spacing: 0) {
+                // Search bar (only show when enabled)
+                if showSearchBar {
+                    SearchBar(
+                        searchText: $searchText,
+                        placeholder: "Search all notes...",
+                        onSearchChange: { query in
+                            onSearchChange?(query)
+                        }
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+                }
+                
+                ScrollView {
+                    if isSearchActive && notes.isEmpty {
+                        // Empty search results state
+                        SearchEmptyStateView(searchQuery: searchQuery)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(32)
+                    } else {
+                        LazyVGrid(columns: gridColumns, spacing: 12, pinnedViews: []) {
+                            // Only show create note card when not searching
+                            if !isSearchActive {
+                                CreateNoteCard(onTap: onCreateNote)
+                            }
+                            
+                            // Existing notes with lazy loading
+                            ForEach(notes.indices, id: \.self) { index in
+                                NotePreviewCard(
+                                    note: notes[index],
+                                    onTap: {
+                                        onNoteSelect(notes[index])
+                                    },
+                                    onDelete: onNoteDelete != nil ? {
+                                        onNoteDelete?(notes[index])
+                                    } : nil
+                                )
+                                .onAppear {
+                                    // Preload next batch if needed
+                                    if PerformanceOptimizer.shouldLoadMore(items: notes, currentIndex: index) {
+                                        // Could implement pagination here if needed
+                                    }
+                                }
                             }
                         }
+                        .padding(16)
                     }
                 }
-                .padding(16)
             }
             .background(themeManager.backgroundColor)
             .onAppear {
@@ -83,6 +124,39 @@ struct NotesGridView: View {
         }
         
         gridColumns = Array(repeating: GridItem(.flexible(), spacing: spacing), count: columnsCount)
+    }
+}
+
+struct SearchEmptyStateView: View {
+    let searchQuery: String
+    @EnvironmentObject var themeManager: ThemeManager
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 48))
+                .foregroundColor(themeManager.secondaryTextColor.opacity(0.6))
+            
+            VStack(spacing: 8) {
+                Text("No notes found")
+                    .font(.dmSansMedium(size: 18))
+                    .foregroundColor(themeManager.textColor)
+                
+                Text("No notes match \"\(searchQuery)\"")
+                    .font(.dmSans(size: 14))
+                    .foregroundColor(themeManager.secondaryTextColor)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Text("Try searching with different keywords or check your spelling.")
+                .font(.dmSans(size: 12))
+                .foregroundColor(themeManager.secondaryTextColor.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("No search results found for \(searchQuery)")
     }
 }
 

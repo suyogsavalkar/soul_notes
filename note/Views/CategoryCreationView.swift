@@ -35,7 +35,7 @@ struct CategoryCreationView: View {
                         .font(.system(size: 16))
                         .foregroundColor(themeManager.secondaryTextColor)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(HoverButtonStyle())
                 .accessibilityLabel("Close")
             }
             .padding(20)
@@ -177,45 +177,7 @@ struct CategoryCreationView: View {
     }
 }
 
-struct SecondaryButtonStyle: ButtonStyle {
-    @EnvironmentObject var themeManager: ThemeManager
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.dmSansMedium(size: 14))
-            .foregroundColor(themeManager.secondaryTextColor)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.clear)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(themeManager.cardBorderColor, lineWidth: 1)
-                    )
-            )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
 
-struct PrimaryButtonStyle: ButtonStyle {
-    @EnvironmentObject var themeManager: ThemeManager
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.dmSansMedium(size: 14))
-            .foregroundColor(Color.black)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(themeManager.accentColor)
-            )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
 
 #Preview {
     @State var isPresented = true

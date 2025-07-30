@@ -13,11 +13,13 @@ struct MainView: View {
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var fontSizeManager = FontSizeManager()
     @StateObject private var focusTimerManager = FocusTimerManager()
+    @StateObject private var searchManager = SearchManager()
     @State private var selectedCategory: Category?
     @State private var selectedNote: Note?
     @State private var showingSidebar: Bool = true
     @State private var sidebarVisibility: NavigationSplitViewVisibility = .all
     @State private var showingFocusLog: Bool = false
+    @State private var searchResults: [Note] = []
     
     var body: some View {
         NavigationSplitView(columnVisibility: $sidebarVisibility) {
@@ -26,8 +28,18 @@ struct MainView: View {
                 selectedCategory: $selectedCategory,
                 categories: noteManager.categories,
                 onCategorySelect: { category in
+                    // Save current note before switching categories
+                    if let currentNote = selectedNote {
+                        noteManager.updateNote(currentNote)
+                        noteManager.saveChangesImmediately()
+                    }
+                    
                     selectedCategory = category
                     selectedNote = nil // Clear note selection when switching categories
+                    
+                    // Clear search when switching categories
+                    searchManager.clearSearch()
+                    searchResults = []
                 },
                 onCategoryAdd: { name, iconName in
                     do {
@@ -67,6 +79,8 @@ struct MainView: View {
                         ),
                         onSave: {
                             noteManager.updateNote(selectedNote)
+                            // Force immediate save to disk
+                            noteManager.saveChangesImmediately()
                         },
                         onToggleSidebar: {
                             withAnimation(.easeInOut(duration: 0.3)) {
@@ -76,6 +90,29 @@ struct MainView: View {
                                     sidebarVisibility = .all
                                 }
                             }
+                        },
+                        onClose: {
+                            // Save current note before closing
+                            noteManager.updateNote(selectedNote)
+                            noteManager.saveChangesImmediately()
+                            
+                            // Find the category that contains this note
+                            let noteCategory = noteManager.categories.first { category in
+                                category.id == selectedNote.categoryId
+                            }
+                            
+                            // Set the selected category to the note's category (or fallback to General)
+                            if let category = noteCategory {
+                                selectedCategory = category
+                            } else {
+                                // Fallback to General category if note's category doesn't exist
+                                selectedCategory = noteManager.categories.first { $0.name == "General" } ?? noteManager.categories.first
+                            }
+                            
+                            // Clear the selected note to return to grid view
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                self.selectedNote = nil
+                            }
                         }
                     )
                     .transition(.asymmetric(
@@ -84,8 +121,14 @@ struct MainView: View {
                     ))
                 } else if let selectedCategory = selectedCategory {
                     NotesGridView(
-                        notes: noteManager.notes(for: selectedCategory),
+                        notes: searchManager.isSearchActive ? searchResults : noteManager.notes(for: selectedCategory),
                         onNoteSelect: { note in
+                            // Save current note before switching
+                            if let currentNote = selectedNote {
+                                noteManager.updateNote(currentNote)
+                                noteManager.saveChangesImmediately()
+                            }
+                            
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 selectedNote = note
                             }
@@ -104,6 +147,13 @@ struct MainView: View {
                                 }
                                 noteManager.deleteNote(note)
                             }
+                        },
+                        isSearchActive: searchManager.isSearchActive,
+                        searchQuery: searchManager.searchQuery,
+                        showSearchBar: selectedCategory.name == "General",
+                        onSearchChange: { query in
+                            searchManager.updateSearch(query: query, in: noteManager.notes)
+                            searchResults = searchManager.searchResults
                         }
                     )
                     .transition(.asymmetric(
@@ -165,6 +215,13 @@ struct MainView: View {
             // Select first category by default
             if selectedCategory == nil, let firstCategory = noteManager.categories.first {
                 selectedCategory = firstCategory
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.willTerminateNotification)) { _ in
+            // Save any unsaved changes before app quits
+            if let currentNote = selectedNote {
+                noteManager.updateNote(currentNote)
+                noteManager.saveChangesImmediately()
             }
         }
     }

@@ -24,9 +24,9 @@ struct Note: Identifiable, Codable, Equatable {
         self.modifiedAt = Date()
     }
     
-    /// Returns truncated body text for grid preview (max 100 characters)
+    /// Returns truncated body text for grid preview (max 150 characters)
     var preview: String {
-        return PerformanceOptimizer.efficientTruncate(body, maxLength: 100)
+        return PerformanceOptimizer.efficientTruncate(body, maxLength: 150)
     }
     
     /// Updates the modification date when note content changes

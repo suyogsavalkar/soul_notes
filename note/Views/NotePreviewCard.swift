@@ -41,7 +41,7 @@ struct NotePreviewCard: View {
                     Text(note.preview)
                         .font(.cardPreview)
                         .foregroundColor(themeManager.secondaryTextColor)
-                        .lineLimit(4)
+                        .lineLimit(5)
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {

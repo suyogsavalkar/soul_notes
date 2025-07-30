@@ -13,6 +13,7 @@ struct EditorTopBar: View {
     let onToggleSidebar: () -> Void
     let onSave: () -> Void
     let onReflectWithAI: () -> Void
+    let onClose: (() -> Void)?
     
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var fontSizeManager: FontSizeManager
@@ -32,7 +33,7 @@ struct EditorTopBar: View {
                         .font(.system(size: 16))
                         .foregroundColor(themeManager.textColor)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(HoverButtonStyle())
                 .accessibilityLabel("Toggle sidebar")
                 
                 // Font size control
@@ -55,7 +56,7 @@ struct EditorTopBar: View {
                             .fill(themeManager.secondaryTextColor.opacity(0.1))
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(HoverButtonStyle())
                 .accessibilityLabel("Change font size")
                 .accessibilityHint("Current size: \(Int(fontSizeManager.currentBodyFontSize)) pixels")
                 
@@ -63,13 +64,8 @@ struct EditorTopBar: View {
                 FocusTimerControl()
                     .environmentObject(focusTimerManager)
                     .environmentObject(themeManager)
-            }
-            
-            Spacer()
-            
-            // Right side action buttons
-            HStack(spacing: 12) {
-                // Reflect with AI button with tooltip
+                
+                // Reflect with AI button (moved to left side, near timer)
                 Button("Reflect with AI") {
                     onReflectWithAI()
                 }
@@ -81,7 +77,7 @@ struct EditorTopBar: View {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(isReflectButtonEnabled ? themeManager.accentColor.opacity(0.1) : themeManager.secondaryTextColor.opacity(0.05))
                 )
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(HoverButtonStyle())
                 .disabled(!isReflectButtonEnabled)
                 .tooltip(
                     "Write at least 150 words first",
@@ -90,8 +86,13 @@ struct EditorTopBar: View {
                 )
                 .accessibilityLabel("Reflect with AI")
                 .accessibilityHint(isReflectButtonEnabled ? "Available with \(wordCount) words" : "Requires at least 150 words")
-                
-                // Save indicator (positioned to the right of Reflect with AI)
+            }
+            
+            Spacer()
+            
+            // Right side - save indicator and close button
+            HStack(spacing: 12) {
+                // Save indicator
                 if hasUnsavedChanges {
                     Text("Saving...")
                         .font(.dmSans(size: 12))
@@ -100,6 +101,12 @@ struct EditorTopBar: View {
                         .padding(.vertical, 4)
                         .accessibilityLabel("Saving changes")
                         .accessibilityHint("Note is being saved automatically")
+                }
+                
+                // Close button
+                if let onClose = onClose {
+                    EditorCloseButton(onClose: onClose)
+                        .environmentObject(themeManager)
                 }
             }
         }
@@ -121,7 +128,8 @@ struct EditorTopBar: View {
         hasUnsavedChanges: true,
         onToggleSidebar: { print("Toggle sidebar") },
         onSave: { print("Save") },
-        onReflectWithAI: { print("Reflect with AI") }
+        onReflectWithAI: { print("Reflect with AI") },
+        onClose: { print("Close") }
     )
     .environmentObject(ThemeManager())
     .environmentObject(FontSizeManager())

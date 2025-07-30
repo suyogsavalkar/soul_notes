@@ -19,7 +19,7 @@ class SaveStateManager: ObservableObject {
     @Published var saveStatus: SaveStatus = .saved
     @Published var lastSaveTime: Date?
     
-    private let autoSaveDebouncer = PerformanceOptimizer.Debouncer(delay: 0.5)
+    private let autoSaveDebouncer = PerformanceOptimizer.Debouncer(delay: 0.2)
     private var saveRetryCount = 0
     private let maxRetryAttempts = 3
     
@@ -31,6 +31,7 @@ class SaveStateManager: ObservableObject {
             saveStatus = .unsaved
         }
         
+        // Reduced debounce time for more responsive saving
         autoSaveDebouncer.debounce {
             Task { @MainActor in
                 await self.performSave(saveOperation)

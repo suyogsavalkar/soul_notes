@@ -26,7 +26,7 @@ struct NoteReflectionView: View {
                 Button("Close") {
                     isPresented = false
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(HoverButtonStyle())
             }
             .padding(.horizontal, 24)
             .padding(.top, 24)
@@ -67,7 +67,7 @@ struct NoteReflectionView: View {
                 .padding(.vertical, 8)
                 .background(themeManager.secondaryTextColor)
                 .cornerRadius(6)
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(HoverButtonStyle())
                 
                 Button("Go to ChatGPT") {
                     openChatGPT()
@@ -78,7 +78,7 @@ struct NoteReflectionView: View {
                 .padding(.vertical, 8)
                 .background(themeManager.accentColor)
                 .cornerRadius(6)
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(HoverButtonStyle())
             }
             .padding(.horizontal, 24)
             
