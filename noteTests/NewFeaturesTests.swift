@@ -139,7 +139,7 @@ class NewFeaturesTests: XCTestCase {
     func testApplicationBranding() {
         // Test that application uses correct branding
         // This would verify Info.plist values in practice
-        XCTAssertTrue(true, "Application should be branded as Solo")
+        XCTAssertTrue(true, "Application should be branded as Soul")
     }
     
     // MARK: - Error Handling Tests

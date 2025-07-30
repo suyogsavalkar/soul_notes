@@ -35,24 +35,11 @@ struct WordCountCalculator {
         return wordCount
     }
     
-    /// Calculates combined word count from title and body
-    /// - Parameters:
-    ///   - title: The note title
-    ///   - body: The note body content
-    /// - Returns: Combined word count from both title and body
-    static func combinedWordCount(title: String, body: String) -> Int {
-        let titleWords = countWords(in: title)
-        let bodyWords = countWords(in: body)
-        return titleWords + bodyWords
-    }
-    
     /// Determines if the "Reflect with AI" button should be enabled based on word count
-    /// - Parameters:
-    ///   - title: The note title
-    ///   - body: The note body content
+    /// - Parameter body: The note body content
     /// - Returns: True if word count is 150 or more, false otherwise
-    static func isReflectButtonEnabled(title: String, body: String) -> Bool {
-        return combinedWordCount(title: title, body: body) >= 150
+    static func isReflectButtonEnabled(body: String) -> Bool {
+        return countWords(in: body) >= 150
     }
 }
 
@@ -72,13 +59,13 @@ struct EditorState {
     ///   - originalBody: Original note body for comparison
     mutating func update(title: String, body: String, originalTitle: String, originalBody: String) {
         // Update word count
-        wordCount = WordCountCalculator.combinedWordCount(title: title, body: body)
+        wordCount = WordCountCalculator.countWords(in: body)
         
         // Update reflect button state
-        isReflectButtonEnabled = WordCountCalculator.isReflectButtonEnabled(title: title, body: body)
+        isReflectButtonEnabled = WordCountCalculator.isReflectButtonEnabled(body: body)
         
         // Update unsaved changes state
-        hasUnsavedChanges = title != originalTitle || body != originalBody
+        hasUnsavedChanges = (title != originalTitle) || (body != originalBody)
     }
     
     /// Marks the state as saved

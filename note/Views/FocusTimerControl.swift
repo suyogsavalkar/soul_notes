@@ -36,6 +36,10 @@ struct FocusTimerControl: View {
             )
         }
         .buttonStyle(HoverButtonStyle())
+        .tooltip(
+            focusTimerManager.isTimerRunning ? "Stop focus session" : "Start a focused session",
+            position: .top
+        )
         .accessibilityLabel(focusTimerManager.isTimerRunning ? "Stop focus timer" : "Start focus timer")
         .accessibilityHint("Current duration: \(focusTimerManager.formattedSelectedDuration)")
         .onLongPressGesture {

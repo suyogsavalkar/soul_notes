@@ -1,6 +1,6 @@
 # Product Overview
 
-**Solo** is a macOS note-taking application built with SwiftUI that focuses on distraction-free writing and productivity. The app features a clean, minimal interface with support for both light and dark themes.
+**Soul** is a macOS note-taking application built with SwiftUI that focuses on distraction-free writing and productivity. The app features a clean, minimal interface with support for both light and dark themes.
 
 ## Key Features
 

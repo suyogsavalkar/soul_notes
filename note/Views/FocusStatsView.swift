@@ -13,6 +13,15 @@ struct FocusStatsView: View {
     let onTapStats: () -> Void
     @EnvironmentObject var themeManager: ThemeManager
     
+    private var formattedFocusText: String {
+        let minutes = Int(focusStats.totalFocusTime) / 60
+        if minutes == 1 {
+            return "1 minute focus"
+        } else {
+            return "\(minutes) minutes focus"
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 8) {
             // Focus time stat
@@ -22,7 +31,7 @@ struct FocusStatsView: View {
                         .font(.system(size: 14))
                         .foregroundColor(themeManager.accentColor)
                     
-                    Text("\(focusStats.formattedFocusTime) focus")
+                    Text(formattedFocusText)
                         .font(.dmSans(size: 12))
                         .foregroundColor(themeManager.secondaryTextColor)
                     
@@ -37,6 +46,7 @@ struct FocusStatsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(HoverButtonStyle())
+            .tooltip("Your focused time", position: .top)
             
             // Distractions avoided stat
             Button(action: onTapStats) {
@@ -60,6 +70,7 @@ struct FocusStatsView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(HoverButtonStyle())
+            .tooltip("Recorded distractions", position: .top)
         }
         .accessibilityLabel("Focus statistics")
         .accessibilityHint("Tap to view detailed focus logs")

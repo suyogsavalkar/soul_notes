@@ -24,7 +24,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		97EF933F2E3115FD004973B1 /* note.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = note.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		97EF933F2E3115FD004973B1 /* Soul.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Soul.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		97EF934D2E3115FF004973B1 /* noteTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = noteTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		97EF93572E3115FF004973B1 /* noteUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = noteUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -85,7 +85,7 @@
 		97EF93402E3115FD004973B1 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				97EF933F2E3115FD004973B1 /* note.app */,
+				97EF933F2E3115FD004973B1 /* Soul.app */,
 				97EF934D2E3115FF004973B1 /* noteTests.xctest */,
 				97EF93572E3115FF004973B1 /* noteUITests.xctest */,
 			);
@@ -95,9 +95,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		97EF933E2E3115FD004973B1 /* note */ = {
+		97EF933E2E3115FD004973B1 /* Soul */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 97EF93612E3115FF004973B1 /* Build configuration list for PBXNativeTarget "note" */;
+			buildConfigurationList = 97EF93612E3115FF004973B1 /* Build configuration list for PBXNativeTarget "Soul" */;
 			buildPhases = (
 				97EF933B2E3115FD004973B1 /* Sources */,
 				97EF933C2E3115FD004973B1 /* Frameworks */,
@@ -110,11 +110,11 @@
 			fileSystemSynchronizedGroups = (
 				97EF93412E3115FD004973B1 /* note */,
 			);
-			name = note;
+			name = Soul;
 			packageProductDependencies = (
 			);
 			productName = note;
-			productReference = 97EF933F2E3115FD004973B1 /* note.app */;
+			productReference = 97EF933F2E3115FD004973B1 /* Soul.app */;
 			productType = "com.apple.product-type.application";
 		};
 		97EF934C2E3115FF004973B1 /* noteTests */ = {
@@ -200,7 +200,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				97EF933E2E3115FD004973B1 /* note */,
+				97EF933E2E3115FD004973B1 /* Soul */,
 				97EF934C2E3115FF004973B1 /* noteTests */,
 				97EF93562E3115FF004973B1 /* noteUITests */,
 			);
@@ -258,12 +258,12 @@
 /* Begin PBXTargetDependency section */
 		97EF934F2E3115FF004973B1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 97EF933E2E3115FD004973B1 /* note */;
+			target = 97EF933E2E3115FD004973B1 /* Soul */;
 			targetProxy = 97EF934E2E3115FF004973B1 /* PBXContainerItemProxy */;
 		};
 		97EF93592E3115FF004973B1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 97EF933E2E3115FD004973B1 /* note */;
+			target = 97EF933E2E3115FD004973B1 /* Soul */;
 			targetProxy = 97EF93582E3115FF004973B1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -394,6 +394,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = note/note.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -402,15 +403,20 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Soul;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = note.note;
+				PRODUCT_BUNDLE_IDENTIFIER = Soul.Soul;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -421,6 +427,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = note/note.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -429,15 +436,20 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Soul;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = note.note;
+				PRODUCT_BUNDLE_IDENTIFIER = Soul.Soul;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				SUPPORTED_PLATFORMS = macosx;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -523,7 +535,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		97EF93612E3115FF004973B1 /* Build configuration list for PBXNativeTarget "note" */ = {
+		97EF93612E3115FF004973B1 /* Build configuration list for PBXNativeTarget "Soul" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				97EF93622E3115FF004973B1 /* Debug */,

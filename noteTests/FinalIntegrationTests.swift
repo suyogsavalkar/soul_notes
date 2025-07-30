@@ -34,7 +34,7 @@ class FinalIntegrationTests: XCTestCase {
     func testCompleteUserJourneyWithAllNewFeatures() {
         // Test a complete user journey using all new features
         
-        // 1. User opens app (rebranded as Solo)
+        // 1. User opens app (rebranded as Soul)
         XCTAssertNotNil(noteManager)
         XCTAssertNotNil(themeManager)
         
@@ -168,10 +168,10 @@ class FinalIntegrationTests: XCTestCase {
     }
     
     func testStoragePathsWithNewBranding() {
-        // Test that storage paths use correct "Solo" branding
+        // Test that storage paths use correct "Soul" branding
         
-        // This would verify that all storage operations use ~/Documents/Solo/
-        XCTAssertTrue(true, "All storage paths should use Solo branding")
+        // This would verify that all storage operations use ~/Documents/Soul/
+        XCTAssertTrue(true, "All storage paths should use Soul branding")
     }
     
     // MARK: - Error Recovery Tests
@@ -243,7 +243,7 @@ class FinalIntegrationTests: XCTestCase {
     }
     
     func testDataMigrationWithRebranding() {
-        // Test data migration from old "note" branding to "Solo"
+        // Test data migration from old "note" branding to "Soul"
         
         XCTAssertTrue(true, "Data migration should work seamlessly")
     }
@@ -265,8 +265,8 @@ class FinalIntegrationTests: XCTestCase {
         // Requirement 36: Note reflection modal
         XCTAssertTrue(true, "Note reflection modal should work")
         
-        // Requirement 37: Solo branding
-        XCTAssertTrue(true, "App should be branded as Solo")
+        // Requirement 37: Soul branding
+        XCTAssertTrue(true, "App should be branded as Soul")
         
         // Achievement sharing with proper permissions
         XCTAssertTrue(true, "Achievement sharing should work with proper permissions")

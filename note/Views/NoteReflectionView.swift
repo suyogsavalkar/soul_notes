@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct NoteReflectionView: View {
-    let noteTitle: String
     let noteContent: String
     @Binding var isPresented: Bool
     @EnvironmentObject var themeManager: ThemeManager
@@ -33,7 +32,7 @@ struct NoteReflectionView: View {
             
             // Note content display
             VStack(alignment: .leading, spacing: 12) {
-                Text("Note: \(noteTitle.isEmpty ? "Untitled" : noteTitle)")
+                Text("Note Content")
                     .font(.dmSansMedium(size: 18))
                     .foregroundColor(themeManager.textColor)
                 
@@ -93,9 +92,7 @@ struct NoteReflectionView: View {
         pasteboard.clearContents()
         
         let fullContent = """
-        Note Title: \(noteTitle.isEmpty ? "Untitled" : noteTitle)
-        
-        Content:
+        Note Content:
         \(noteContent.isEmpty ? "This note is empty." : noteContent)
         
         Please help me reflect on this note and provide insights about:
@@ -123,7 +120,6 @@ struct NoteReflectionView: View {
     @State var isPresented = true
     
     return NoteReflectionView(
-        noteTitle: "Sample Note",
         noteContent: "This is a sample note with some content to demonstrate the reflection interface.",
         isPresented: $isPresented
     )

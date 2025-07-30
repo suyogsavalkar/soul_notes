@@ -81,7 +81,7 @@ struct EditorTopBar: View {
                 .disabled(!isReflectButtonEnabled)
                 .tooltip(
                     "Write at least 150 words first",
-                    position: .bottom,
+                    position: .top,
                     isEnabled: !isReflectButtonEnabled
                 )
                 .accessibilityLabel("Reflect with AI")

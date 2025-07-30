@@ -43,14 +43,14 @@ struct NoteEditorView: View {
     
     // MARK: - Computed Properties
     
-    /// Combined word count of title and body content
+    /// Word count of body content
     var wordCount: Int {
-        return WordCountCalculator.combinedWordCount(title: note.title, body: note.body)
+        return WordCountCalculator.countWords(in: note.body)
     }
     
     /// Whether the "Reflect with AI" button should be enabled (150+ words required)
     var isReflectButtonEnabled: Bool {
-        return WordCountCalculator.isReflectButtonEnabled(title: note.title, body: note.body)
+        return WordCountCalculator.isReflectButtonEnabled(body: note.body)
     }
     
     var body: some View {
@@ -83,13 +83,16 @@ struct NoteEditorView: View {
             // Editor content with clean layout
             CleanEditorLayout {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Stable title field
-                    StableTitleField(
+                    // Title editor
+                    TitleEditor(
                         title: $note.title,
-                        onTitleChange: {
-                            handleDebouncedUIUpdates()
+                        onTextChange: { oldValue, newValue in
+                            // Only validate and update state after debounced changes
+                            if errorHandler.validateTextInput(newValue, field: "title") {
+                                handleDebouncedUIUpdates()
+                            }
                         },
-                        onImmediateSave: {
+                        onImmediateSave: { oldValue, newValue in
                             handleImmediateSave()
                         }
                     )
@@ -139,7 +142,6 @@ struct NoteEditorView: View {
         }
         .sheet(isPresented: $showReflectWithAI) {
             NoteReflectionView(
-                noteTitle: note.title,
                 noteContent: note.body,
                 isPresented: $showReflectWithAI
             )
@@ -248,6 +250,16 @@ struct NoteEditorView: View {
         ) { _ in
             self.focusManager.restorePreviousFocus()
         }
+        
+        // Set up title submission notification
+        NotificationCenter.default.addObserver(
+            forName: .titleSubmitted,
+            object: nil,
+            queue: .main
+        ) { _ in
+            // Move focus to body when title is submitted
+            self.bodyFocused = true
+        }
     }
     
     private func cleanupEditor() {
@@ -262,8 +274,9 @@ struct NoteEditorView: View {
         focusManager.cleanup()
         saveStateManager.reset()
         
-        // Remove notification observer
+        // Remove notification observers
         NotificationCenter.default.removeObserver(self, name: .editorFocusRecovery, object: nil)
+        NotificationCenter.default.removeObserver(self, name: .titleSubmitted, object: nil)
     }
     
 

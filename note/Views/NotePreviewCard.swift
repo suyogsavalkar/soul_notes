@@ -24,34 +24,33 @@ struct NotePreviewCard: View {
     
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 // Title
-                HStack {
-                    Text(note.title.isEmpty ? "Untitled" : note.title)
-                        .font(.cardTitle)
-                        .foregroundColor(themeManager.textColor)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
+                Text(note.title.isEmpty ? "Untitled" : note.title)
+                    .font(.dmSansSemiBold(size: 16))
+                    .foregroundColor(themeManager.textColor)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                // Preview text - let it flow naturally with space for footer
+                VStack(alignment: .leading, spacing: 0) {
+                    if !note.body.isEmpty {
+                        Text(note.body) // Use full body instead of truncated preview
+                            .font(.cardPreview)
+                            .foregroundColor(themeManager.secondaryTextColor)
+                            .multilineTextAlignment(.leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        Text("No content")
+                            .font(.cardPreview)
+                            .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
+                            .italic()
+                    }
                     
-                    Spacer()
+                    // Add some space before the footer
+                    Spacer(minLength: 8)
                 }
-                
-                // Preview text
-                if !note.body.isEmpty {
-                    Text(note.preview)
-                        .font(.cardPreview)
-                        .foregroundColor(themeManager.secondaryTextColor)
-                        .lineLimit(5)
-                        .multilineTextAlignment(.leading)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    Text("No content")
-                        .font(.cardPreview)
-                        .foregroundColor(themeManager.secondaryTextColor.opacity(0.5))
-                        .italic()
-                }
-                
-                Spacer()
                 
                 // Footer with date (bottom left) and delete button (bottom right)
                 HStack {
@@ -79,8 +78,8 @@ struct NotePreviewCard: View {
                     }
                 }
             }
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+            .padding(12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .aspectRatio(1.0, contentMode: .fill)
             .background(themeManager.cardBackgroundColor)
             .overlay(

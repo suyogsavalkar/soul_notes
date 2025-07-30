@@ -15,6 +15,7 @@ class FocusTimerManager: ObservableObject {
     @Published var selectedDuration: TimeInterval = 600 // 10 minutes default
     @Published var focusStats: FocusStats = FocusStats()
     @Published var distractionStats: DistractionStats = DistractionStats()
+    @Published var focusTimeRangeStats: FocusTimeRangeStats = FocusTimeRangeStats()
     
     private var timer: Timer?
     private var focusLogs: [FocusLogEntry] = []
@@ -68,6 +69,7 @@ class FocusTimerManager: ObservableObject {
             // Log session end
             let sessionDuration = selectedDuration - remainingTime
             logEvent(.sessionEnd, sessionDuration: sessionDuration)
+            recordFocusSession(duration: sessionDuration)
             updateStats()
         }
         
@@ -108,6 +110,7 @@ class FocusTimerManager: ObservableObject {
     private func completeSession() {
         let sessionDuration = selectedDuration
         logEvent(.sessionEnd, sessionDuration: sessionDuration)
+        recordFocusSession(duration: sessionDuration)
         updateStats()
         stopTimer()
         
@@ -321,6 +324,7 @@ class FocusTimerManager: ObservableObject {
         guard let startTime = sessionStartTime else { return }
         let sessionDuration = Date().timeIntervalSince(startTime)
         logEvent(.sessionEnd, sessionDuration: sessionDuration)
+        recordFocusSession(duration: sessionDuration)
         updateStats()
     }
     
@@ -335,6 +339,35 @@ class FocusTimerManager: ObservableObject {
         
         focusLogs.append(logEntry)
         saveFocusLogs()
+    }
+    
+    // MARK: - Focus Session Recording
+    
+    private func recordFocusSession(duration: TimeInterval) {
+        let session = FocusSession(date: Date(), duration: duration)
+        
+        // Add to all sessions
+        focusTimeRangeStats.allSessions.append(session)
+        focusTimeRangeStats.totalFocusTime += duration
+        
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Add to today's sessions if it's today
+        if calendar.isDate(session.date, inSameDayAs: now) {
+            focusTimeRangeStats.todaySessions.append(session)
+            focusTimeRangeStats.todayFocusTime += duration
+        }
+        
+        // Add to last week's sessions if within 7 days
+        let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+        if session.date >= weekAgo {
+            focusTimeRangeStats.lastWeekSessions.append(session)
+            focusTimeRangeStats.lastWeekFocusTime += duration
+        }
+        
+        focusTimeRangeStats.lastUpdated = now
+        saveFocusTimeRangeStats()
     }
     
     // MARK: - Statistics
@@ -427,16 +460,16 @@ class FocusTimerManager: ObservableObject {
         // Total count
         distractionStats.totalDistractionsAvoided = avoidedDistractions.count
         
+        // Calculate today's count
+        let startOfToday = calendar.startOfDay(for: now)
+        distractionStats.todayDistractionsAvoided = avoidedDistractions.filter { 
+            $0.timestamp >= startOfToday
+        }.count
+        
         // Calculate weekly count (last 7 days)
         let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
         distractionStats.weeklyDistractionsAvoided = avoidedDistractions.filter { 
             $0.timestamp >= weekAgo
-        }.count
-        
-        // Calculate monthly count (last 30 days)
-        let monthAgo = calendar.date(byAdding: .day, value: -30, to: now) ?? now
-        distractionStats.monthlyDistractionsAvoided = avoidedDistractions.filter { 
-            $0.timestamp >= monthAgo
         }.count
         
         distractionStats.lastUpdated = now
@@ -485,6 +518,7 @@ class FocusTimerManager: ObservableObject {
     private func loadFocusData() {
         loadFocusLogs()
         loadFocusStats()
+        loadFocusTimeRangeStats()
         loadDistractionData()
         
         // Recalculate stats to ensure consistency after loading
@@ -566,6 +600,27 @@ class FocusTimerManager: ObservableObject {
         }
     }
     
+    private func saveFocusTimeRangeStats() {
+        do {
+            let data = try JSONEncoder().encode(focusTimeRangeStats)
+            let url = getDocumentsDirectory().appendingPathComponent("focus-time-range-stats.json")
+            try data.write(to: url)
+        } catch {
+            print("Failed to save focus time range stats: \(error)")
+        }
+    }
+    
+    private func loadFocusTimeRangeStats() {
+        do {
+            let url = getDocumentsDirectory().appendingPathComponent("focus-time-range-stats.json")
+            let data = try Data(contentsOf: url)
+            focusTimeRangeStats = try JSONDecoder().decode(FocusTimeRangeStats.self, from: data)
+        } catch {
+            print("Failed to load focus time range stats: \(error)")
+            focusTimeRangeStats = FocusTimeRangeStats()
+        }
+    }
+    
     private func getDocumentsDirectory() -> URL {
         let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
         let documentsDirectory = paths[0].appendingPathComponent("Soul")
@@ -591,6 +646,102 @@ class FocusTimerManager: ObservableObject {
 }
 
 // MARK: - Data Models
+
+struct FocusSession: Identifiable, Codable {
+    let id: UUID
+    let date: Date
+    let duration: TimeInterval
+    let performanceRating: FocusPerformanceRating
+    
+    init(date: Date, duration: TimeInterval) {
+        self.id = UUID()
+        self.date = date
+        self.duration = duration
+        self.performanceRating = FocusPerformanceRating.rating(for: duration)
+    }
+}
+
+enum FocusPerformanceRating: String, Codable, CaseIterable {
+    case fair = "Fair - needs improvement"
+    case good = "Good try"
+    case perfect = "Perfect!"
+    
+    static func rating(for duration: TimeInterval) -> FocusPerformanceRating {
+        let minutes = duration / 60
+        if minutes < 5 { return .fair }
+        else if minutes < 10 { return .good }
+        else { return .perfect }
+    }
+    
+    var color: String {
+        switch self {
+        case .fair: return "orange"
+        case .good: return "blue"
+        case .perfect: return "green"
+        }
+    }
+}
+
+enum FocusStatType: String, CaseIterable {
+    case todayFocus = "today_focus"
+    case weeklyFocus = "weekly_focus" 
+    case totalFocus = "total_focus"
+    
+    var displayName: String {
+        switch self {
+        case .todayFocus: return "Focused time today"
+        case .weeklyFocus: return "Focused time last week"
+        case .totalFocus: return "Total focused time"
+        }
+    }
+}
+
+struct FocusTimeRangeStats: Codable {
+    var todayFocusTime: TimeInterval = 0
+    var lastWeekFocusTime: TimeInterval = 0
+    var totalFocusTime: TimeInterval = 0
+    var todaySessions: [FocusSession] = []
+    var lastWeekSessions: [FocusSession] = []
+    var allSessions: [FocusSession] = []
+    var lastUpdated: Date = Date()
+    
+    var formattedTodayFocusTime: String {
+        let minutes = Int(todayFocusTime) / 60
+        if minutes == 1 {
+            return "\(minutes) minute"
+        } else {
+            return "\(minutes) minutes"
+        }
+    }
+    
+    var formattedLastWeekFocusTime: String {
+        let minutes = Int(lastWeekFocusTime) / 60
+        if minutes == 1 {
+            return "\(minutes) minute"
+        } else {
+            return "\(minutes) minutes"
+        }
+    }
+    
+    var formattedTotalFocusTime: String {
+        let hours = Int(totalFocusTime) / 3600
+        let minutes = (Int(totalFocusTime) % 3600) / 60
+        
+        if hours > 0 {
+            if minutes == 1 {
+                return "\(hours)h \(minutes) minute"
+            } else {
+                return "\(hours)h \(minutes) minutes"
+            }
+        } else {
+            if minutes == 1 {
+                return "\(minutes) minute"
+            } else {
+                return "\(minutes) minutes"
+            }
+        }
+    }
+}
 
 struct FocusLogEntry: Identifiable, Codable {
     let id: UUID
@@ -651,6 +802,27 @@ struct FocusStats: Codable {
             return "\(hours)h \(minutes)m"
         } else {
             return "\(minutes)m"
+        }
+    }
+}
+
+struct DistractionStats: Codable {
+    var todayDistractionsAvoided: Int = 0
+    var weeklyDistractionsAvoided: Int = 0
+    var totalDistractionsAvoided: Int = 0
+    var lastUpdated: Date = Date()
+}
+
+enum StatType: String, CaseIterable {
+    case today = "today"
+    case weekly = "weekly"
+    case total = "total"
+    
+    var displayName: String {
+        switch self {
+        case .today: return "Distractions avoided today"
+        case .weekly: return "Distractions avoided in last 7 days"
+        case .total: return "Total distractions avoided"
         }
     }
 }

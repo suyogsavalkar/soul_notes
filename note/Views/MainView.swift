@@ -19,6 +19,7 @@ struct MainView: View {
     @State private var showingSidebar: Bool = true
     @State private var sidebarVisibility: NavigationSplitViewVisibility = .all
     @State private var showingFocusLog: Bool = false
+    @State private var showingFocusLogFromFocusStats: Bool = false
     @State private var searchResults: [Note] = []
     
     var body: some View {
@@ -61,6 +62,7 @@ struct MainView: View {
                     }
                 },
                 onFocusStatsClick: {
+                    showingFocusLogFromFocusStats = true
                     showingFocusLog = true
                 }
             )
@@ -203,10 +205,15 @@ struct MainView: View {
         .sheet(isPresented: $showingFocusLog) {
             FocusLogView(
                 distractionStats: focusTimerManager.distractionStats,
-                distractionLogs: focusTimerManager.getDistractionLogs()
+                distractionLogs: focusTimerManager.getDistractionLogs(),
+                focusTimeRangeStats: focusTimerManager.focusTimeRangeStats,
+                initialTab: showingFocusLogFromFocusStats ? .focus : .distractions
             )
             .environmentObject(focusTimerManager)
             .environmentObject(themeManager)
+            .onDisappear {
+                showingFocusLogFromFocusStats = false
+            }
         }
         .onAppear {
             // Initialize font loader
