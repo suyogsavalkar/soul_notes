@@ -1,39 +1,47 @@
 # Soul
 
+![Soul App Screenshot](marketing_assets/Screenshot%202025-07-30%20at%2011.08.58%20PM.png)
+
 A clean, distraction-free note-taking application for macOS built with SwiftUI. Soul focuses on providing a minimal interface that promotes productivity and deep focus while writing.
 
 ## Features
 
 ### 📝 Clean Editor Interface
+
 - Distraction-free note editing with a minimal, elegant design
 - Hidden title bar for maximum screen real estate
 - Focus management to help you stay in the writing flow
 - Real-time word count for both titles and body content
 
 ### 🗂️ Category Organization
+
 - Organize notes into customizable categories
 - Choose from SF Symbol icons for visual category identification
 - Default categories include Personal, Work, Ideas, and Projects
 - Easy category creation and management
 
 ### ⏱️ Focus Timer System
+
 - Built-in focus timer to track writing sessions
 - Productivity statistics and focus session history
 - Visual focus log to monitor your writing habits
 - Achievement system to celebrate productivity milestones
 
 ### 🤖 AI Reflection
+
 - Reflect on your notes with AI assistance
 - Minimum 150-word requirement for meaningful reflections
 - Integrated seamlessly into the note editing experience
 
 ### 🎨 Theme Support
+
 - Beautiful light and dark mode themes
 - Custom color schemes optimized for readability
 - Automatic theme switching based on system preferences
 - Custom DM Sans typography throughout the interface
 
 ### 💾 Auto-save & Reliability
+
 - Automatic saving with visual indicators for unsaved changes
 - Reliable data persistence using JSON encoding
 - Local file system storage for privacy and control
@@ -56,6 +64,7 @@ cd soul
 ### Build with Xcode
 
 1. **Open the project in Xcode:**
+
    ```bash
    open note.xcodeproj
    ```
@@ -135,6 +144,7 @@ xcodebuild test -project note.xcodeproj -scheme note -destination 'platform=macO
 ## Architecture
 
 Soul follows the MVVM (Model-View-ViewModel) pattern with:
+
 - **Models** - Data structures (Note, Category)
 - **Views** - SwiftUI components
 - **Services** - Business logic managers (NoteManager, ThemeManager, etc.)
