@@ -1,6 +1,6 @@
 # Soul
 
-![Soul App Screenshot](marketing_assets/Screenshot%202025-07-30%20at%2011.08.58%20PM.png)
+![Soul App Screenshot](/marketing_assets/ss.png)
 
 A clean, distraction-free note-taking application for macOS built with SwiftUI. Soul focuses on providing a minimal interface that promotes productivity and deep focus while writing.
 
