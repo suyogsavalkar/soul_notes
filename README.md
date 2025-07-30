@@ -142,8 +142,8 @@ Soul follows the MVVM (Model-View-ViewModel) pattern with:
 
 ## License
 
-[Add your license information here]
+This project comes under the MIT License.
 
 ## Support
 
-[Add support information or contact details here]
+Reach out to suyog231002[at]gmail.com.
